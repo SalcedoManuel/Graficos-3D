@@ -2,8 +2,16 @@ body {
   background-color: powderblue;
 }
 h1 {
-  color: blue;
+  color: blue;  /*Color de la Fuente  */
+  font-family: courier;  /* Familia de la fuente */
+  text-align: center;    /*Alineación del texto  */
+  margin-left: 20px;     /*Margen izquierdo  */
+  font-size: 300%;       /*Tamaño de la fuente */
+  border: 2px solid red; /*Tamaño del borde del recuadro y color */
+  padding: 30px;         /*Separación entre el recuadro y el título*/
 }
 p {
   color: red;
+  text-align: center;
+  font-family: verdana;
 }
