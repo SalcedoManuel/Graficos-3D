@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>
+       Draw a point
+    </title>
+</head>
+
+<body onload="init()">
+  <canvas id="myCanvas" width="640" height="480">
+  </canvas>
+</body>
+
+<script id="shaderVs" type="x-shander/x-vertex">
+  void main() {
+    gl_position = vec4(0.0, 0.0, 0.0, 1.0);
+    gl_PointSize = 10.0;
+  }
+</script>
