@@ -1,14 +1,36 @@
-<!doctype html>
+<!DOCTYPE html>
+<html>
 
-// Get canvas object from the DOM
- var canvas = document.getElementById("myCanvas");
- // Init WebGL context
- var gl = canvas.getContext("webgl");
- // Register event handler
- canvas.onmousedown = function(ev) {
- click(ev, gl, canvas);
- };
- function click(ev, gl, canvas) {
+<head>
+    <title>Practica 3</title>
+</head>
+<body onload="init()">
+  <!--Tamaño del canvas Anchura x Altura-->
+  <canvas id="myCanvas" width="1000" height="750">
+  </canvas>
+</body>
+<script>
+  function init() {
+    //Get canvas object from the DOM
+    var canvas = document.getElementById("myCanvas");
+
+    //Get the rendering context for WebGL
+    var gl = canvas.getContext("webgl");
+    if (!gl){
+      console.log("Failed to get the renderinf context");
+      return;
+    }
+    // Set clear color Ahora está rosa
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+
+    // Clear canvas
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    canvas.onmousedown = function(ev) {
+      click(ev, gl, canvas);
+    };
+
+  function click(ev, gl, canvas) {
  // Coordinates of canvas origin
  var rect = ev.target.getBoundingClientRect();
  // relative x coordinate of click in canvas
@@ -18,6 +40,21 @@
  // WebGL coordinates (3D)
  var halfCanvasWidth = canvas.width / 2;
  var halfCanvasHeight = canvas.height / 2;
+
  var x = (clickX - halfCanvasWidth) / halfCanvasWidth;
  var y = (halfCanvasHeight - clickY) / halfCanvasHeight;
  var xyz = [x, y, 0];
+ if (x > 0.7 || y > 0.7) {
+   console.log("Blanco");
+ } else if (x > 0 && y > 0 ){
+   console.log("Rojo");
+ } else if (x > 0 && y < 0 ){
+   console.log("Verde");
+ } else if (x < 0 && y > 0 ){
+   console.log("Rosa");
+ } else if (x < 0 && y < 0) {
+   console.log("Azul");
+ }
+}
+}
+</script>
