@@ -9,23 +9,42 @@
   <canvas id="myCanvas" width="1000" height="750">
   </canvas>
 </body>
+<script id="shaderVs" type="x-shader/x-vertex">
+  void main() {
+    gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
+    gl_PointSize = 10.0;
+  }
+</script>
+
+<script id="shaderFs" type="x-shader/x-fragment">
+  void main() {
+    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+  }
+</script>
+
 <script>
   function init() {
     //Get canvas object from the DOM
     var canvas = document.getElementById("myCanvas");
 
-    //Get the rendering context for WebGL
+    // Init WebGL context
     var gl = canvas.getContext("webgl");
-    if (!gl){
-      console.log("Failed to get the renderinf context");
-      return;
+    if (!gl) {
+        console.log("Failed to get the rendering context for WebGL");
+        return;
     }
     // Set clear color Ahora está rosa
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
-
     // Clear canvas
     gl.clear(gl.COLOR_BUFFER_BIT);
 
+    // Init shaders
+var vs = document.getElementById('shaderVs').innerHTML;
+var fs = document.getElementById('shaderFs').innerHTML;
+if (!initShaders(gl, vs, fs)) {
+console.log('Failed to intialize shaders.');
+return;
+}
     canvas.onmousedown = function(ev) {
       click(ev, gl, canvas);
     };
@@ -43,8 +62,9 @@
 
  var x = (clickX - halfCanvasWidth) / halfCanvasWidth;
  var y = (halfCanvasHeight - clickY) / halfCanvasHeight;
+ var verticesArray = [];
  var xyz = [x, y, 0];
- if (x > 0.7 || y > 0.7) {
+ if (x > 0.7 || y > 0.7 || x < -0.7 || y < -0.7) {
    console.log("Blanco");
  } else if (x > 0 && y > 0 ){
    console.log("Rojo");
