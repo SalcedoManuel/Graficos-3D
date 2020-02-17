@@ -14,3 +14,11 @@ var FSHADER_SOURCE =
   void main(){
     gl_FragColor = u_FragColor;
   }
+
+function main(){
+  if(!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)){
+    console.log('Failed to intialize shaders.');
+    return;
+  }
+}
+var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
