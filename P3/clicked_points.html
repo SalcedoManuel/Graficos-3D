@@ -11,6 +11,7 @@
 </body>
 <script id="shaderVs" type="x-shader/x-vertex">
   attribute vec4 a_Position;
+  //attribute vec1 a_Size;
   void main(){
     gl_Position = a_Position;
     gl_PointSize = 20.0;
@@ -26,6 +27,9 @@
 </script>
 
 <script>
+  var g_points = [];
+  var g_colors = [];
+  var g_size = [];
   function init(){
     var canvas = document.getElementById("myCanvas");
     var gl = canvas.getContext("webgl");
@@ -58,8 +62,9 @@ canvas.onmousedown = function(ev) {
 gl.clear(gl.COLOR_BUFFER_BIT);
 }
 function click(ev, gl, canvas, a_Position, u_FragColor){
-  var g_points = [];
-  var g_colors = [];
+//var g_points = [];
+  //var g_colors = [];
+  var g_size = [];
   //var verticesArray = [];
   // Coordinates of canvas origin
   var rect = ev.target.getBoundingClientRect();
@@ -73,35 +78,38 @@ function click(ev, gl, canvas, a_Position, u_FragColor){
 
   var x = (clickX - halfCanvasWidth) / halfCanvasWidth;
   var y = (halfCanvasHeight - clickY) / halfCanvasHeight;
-  //xyz = [x,y,0];
+  var xyz = [x,y,0];
+
   //verticesArray.push(xyz);
-  g_points.push([x,y]);
+  g_points.push(xyz);
   console.log(x,y);
   if (x > 0.7 || y > 0.7 || x < -0.7 || y < -0.7  ){
     console.log("Blanco");
     g_colors.push([1.0, 1.0, 1.0, 1.0]);
   } else if (x > 0 && y > 0) {
     console.log("Rojo");
-    g_colors.push([1.0, 0.0, 0.0, 0.0]);
+    g_colors.push([1.0, 0.0, 0.0, 1.0]);
   }else if (x > 0 && y < 0) {
-    console.log("Azul");
-    g_colors.push([0.0, 0.0, 1.0, 0.0]);
-  }else if (x < 0 && y < 0) {
-    console.log("Rosa");
-    g_colors.push([1.0, 0.0, 0.5, 0.0]);
-  } else {
     console.log("Verde");
-    g_colors.push([1.0, 1.0, 0.0, 1.0]);
+    g_colors.push([0.0, 1.0, 0.0, 1.0]);
+  }else if (x < 0 && y < 0) {
+    console.log("Azul");
+    g_colors.push([0.0, 0.0, 1.0, 1.0]);
+  } else {
+    console.log("Rosa");
+    g_colors.push([1.0, 0.0, 1.0, 1.0]);
   }
 
   gl.clear(gl.COLOR_BUFFER_BIT);
-  var len = g_points.length;
-  for(var i = 0; i < len; i++){
-    var xy = g_points[i];
-    var rgba = g_colors[i];
-    gl.vertexAttrib3f(a_Position,xy[0], xy[1], 0.0);
-    gl.uniform4f(u_FragColor, rgba[0], rgba[1], rgba[2], rgba[3]);
-    gl.drawArrays(gl.POINTS, 0 ,3);
+  //var len = g_points.length;
+
+  for(var i = 0; i < g_colors.length; i++){
+    //var xy = g_points[i];
+    //var rgba = g_colors[i];
+    //gl.vertexAttrib3f(a_Position,xy[0], xy[1], 0.0);
+    gl.vertexAttrib3fv(a_Position,g_points[i]);
+    gl.uniform4fv(u_FragColor, g_colors[i]);
+    gl.drawArrays(gl.POINTS, 0 ,1);
   }
 }
 function initShaders(gl, vs_source, fs_source) {
