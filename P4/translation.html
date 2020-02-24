@@ -104,8 +104,8 @@
             var matrix_size = mat4.fromScaling(mat4.create(), [size, size, 0.0]);
             var matrix_rotation = mat4.fromXRotation(mat4.create(), rotation);
 
-            var matrix = mat4.multiply(mat4.create(), matrix_translation, matrix_size);
-            var matrix = mat4.multiply(mat4.create(), matrix, matrix_rotation);
+            var matrix_1 = mat4.multiply(mat4.create(), matrix_translation, matrix_size);
+            var matrix = mat4.multiply(mat4.create(), matrix_1, matrix_rotation);
             // Set uniform value (u_Matrix) in vertex shader
             var mvMatrixUniform = gl.getUniformLocation(gl.program, "u_Matrix");
             gl.uniformMatrix4fv(mvMatrixUniform, false, matrix);
@@ -124,8 +124,8 @@
             var matrix_size = mat4.fromScaling(mat4.create(), [size, size, 0.0]);
             var matrix_rotation = mat4.fromXRotation(mat4.create(), rotation);
             // Set Principal Matrix
-            var matrix = mat4.multiply(mat4.create(), matrix_translation, matrix_size);
-            var matrix = mat4.multiply(mat4.create(), matrix, matrix_rotation);
+            var matrix_1 = mat4.multiply(mat4.create(), matrix_translation, matrix_size);
+            var matrix = mat4.multiply(mat4.create(), matrix_1, matrix_rotation);
 
             // Set uniform value (u_Matrix) in vertex shader
             var mvMatrixUniform = gl.getUniformLocation(gl.program, "u_Matrix");
@@ -147,8 +147,8 @@
             var matrix_rotation = mat4.fromXRotation(mat4.create(), rotation);
 
             // Set Principal Matrix
-            var matrix = mat4.multiply(mat4.create(), matrix_translation, matrix_size);
-            var matrix = mat4.multiply(mat4.create(), matrix, matrix_rotation);
+            var matrix_1 = mat4.multiply(mat4.create(), matrix_translation, matrix_size);
+            var matrix = mat4.multiply(mat4.create(), matrix_1, matrix_rotation);
             // Set uniform value (u_Matrix) in vertex shader
             var mvMatrixUniform = gl.getUniformLocation(gl.program, "u_Matrix");
             gl.uniformMatrix4fv(mvMatrixUniform, false, matrix);
@@ -169,8 +169,8 @@
             var matrix_rotation = mat4.fromZRotation(mat4.create(), rotation);
 
             //Set Principal Matrix
-            var matrix = mat4.multiply(mat4.create(), matrix_translation, matrix_size);
-            var matrix = mat4.multiply(mat4.create(), matrix, matrix_rotation);
+            var matrix_1 = mat4.multiply(mat4.create(), matrix_translation, matrix_size);
+            var matrix = mat4.multiply(mat4.create(), matrix_1, matrix_rotation);
             // Set uniform value (u_Matrix) in vertex shader
             var mvMatrixUniform = gl.getUniformLocation(gl.program, "u_Matrix");
             gl.uniformMatrix4fv(mvMatrixUniform, false, matrix);
