@@ -139,8 +139,13 @@
         function drawScene_Size(step, gl, canvas) {
             // Clear canvas
             gl.clear(gl.COLOR_BUFFER_BIT);
+            if (size + step > 0) {
+              size += step;
+            }else if (size + step <= 0) {
+              size = 0;
+            }
             // Calcualte position
-            size += step;
+            //size += step;
             var matrix_translation = mat4.fromTranslation(mat4.create(), [positionX, positionY, 0.0]);
             var matrix_size = mat4.fromScaling(mat4.create(), [size, size, 0.0]);
             var matrix_rotation = mat4.fromZRotation(mat4.create(), rotation);
