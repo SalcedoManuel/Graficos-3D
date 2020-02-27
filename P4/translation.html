@@ -102,7 +102,7 @@
             positionX += step;
             var matrix_translation = mat4.fromTranslation(mat4.create(), [positionX, positionY, 0.0]);
             var matrix_size = mat4.fromScaling(mat4.create(), [size, size, 0.0]);
-            var matrix_rotation = mat4.fromXRotation(mat4.create(), rotation);
+            var matrix_rotation = mat4.fromZRotation(mat4.create(), rotation);
 
             var matrix_1 = mat4.multiply(mat4.create(), matrix_translation, matrix_size);
             var matrix = mat4.multiply(mat4.create(), matrix_1, matrix_rotation);
