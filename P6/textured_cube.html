@@ -71,10 +71,10 @@
         function initVertexShader(gl) {
             // Vertexes and texture coordinates
             var vertexesAndTextures = [
-                -0.5, -0.5, -0.5, 0.0, 0.0,
-                0.5, -0.5, -0.5, 1.0, 0.0,
-                0.5, 0.5, -0.5, 1.0, 1.0,
-                -0.5, 0.5, -0.5, 0.0, 1.0,
+                -0.5, -0.5, -0.5,  1.0, 0.0,
+                0.5, -0.5, -0.5,   1.0, 1.0,
+                0.5, 0.5, -0.5,    0.0, 1.0,
+                -0.5, 0.5, -0.5,   0.0, 0.0,
 
                 -0.5, -0.5, 0.5, 0.0, 1.0,
                 0.5, -0.5, 0.5, 0.0, 0.0,
@@ -155,10 +155,16 @@
 
         function initTexturesAndDraw(gl) {
             var image = new Image();
-            image.src = 'bricks.jpg';
+            image.src = 'arrow.jpg';
+            var image1 = new Image();
+            image1.src = 'arrow.jpg';
             image.onload = function () {
-                loadTexture(gl, "u_Sampler", image, 0, true);
-                drawScene();
+                loadTexture(gl, "u_Sampler", image, 1, true);
+                image1.onload = function () {
+                  loadTexture(gl,"u_Sampler1", image1, 1, true);
+                  drawScene();
+                };
+                //drawScene();
             };
         }
 
@@ -182,7 +188,7 @@
             gl.clear(gl.COLOR_BUFFER_BIT);
 
             // Rotate
-            var mvMatrix = mat4.fromRotation(mat4.create(), count, [0.5, 0.5, 0.5]);
+            var mvMatrix = mat4.fromRotation(mat4.create(), count, [0, 0.5, 0]);
             var uMvMatrix = gl.getUniformLocation(gl.program, "u_mvMatrix");
             gl.uniformMatrix4fv(uMvMatrix, false, mvMatrix);
 
@@ -191,7 +197,7 @@
 
             // Call drawScene again in the next browser repaint
             count += 0.01;
-            requestAnimationFrame(drawScene);
+            //requestAnimationFrame(drawScene);
         }
 
         function initShaders(gl, vs_source, fs_source) {
