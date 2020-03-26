@@ -39,9 +39,10 @@
     <script>
         var gl;
         var count = 0.0;
-        var step = 0.0;
-        var Rotation = [0 ,0.5 ,0];
-        var z = -3.0;
+        var y = 0;
+        var z = -3;
+        var rotation = [0,0.5,0];
+        var ratio;
         var vertexesAndTextures_Izquierda = [
           //Cara cercana
             -0.5, -0.5, -0.5,  1.0, 0.0,
@@ -171,19 +172,16 @@
             0.5, 0.5, 0.5,     0.0, 0.0,
             0.5, 0.5, -0.5,    0.0, 1.0,
         ];
-
-
-        document.addEventListener('wheel', function (event) {
-            z = event.wheelDelta > 0 ? z + 1 : z - 1;
-            console.log(z);
-            initVertexShader(gl,vertexesAndTextures);
-            initTexturesAndDraw(gl,Rotation, step);
+        document.addEventListener('wheel', function(event) {
+          z = event.wheelDelta > 0 ? z + 1 : z -1;
+          initTexturesAndDraw(gl,count);
         });
+
 
         function init() {
             // Get canvas object from the DOM
             var canvas = document.getElementById("myCanvas");
-
+            var ratio = canvas.width / canvas.height;
             // Init WebGL context
             gl = canvas.getContext("webgl");
             if (!gl) {
@@ -197,7 +195,7 @@
             initShaders(gl, vs, fs);
 
             // Init vertex shader
-            initVertexShader(gl,vertexesAndTextures_Izquierda);
+            initVertexShader(gl,vertexesAndTextures);
 
             // Init projection matrix
             initProjection(gl, canvas);
@@ -209,56 +207,51 @@
             gl.enable(gl.DEPTH_TEST);
 
             // Init textures
-            initTexturesAndDraw(gl,Rotation, step);
-            window.onkeydown = function(ev){
-              //var step =+ step;
-              switch (ev.key){
-                case 'ArrowLeft': //ArrowLeft
-                  vertexesAndTextures = vertexesAndTextures_Izquierda;
-                  initVertexShader(gl,vertexesAndTextures_Izquierda);
-                  initProjection(gl, canvas, z);
-                  //gl.clearColor(0.0, 0.0, 0.0, 1.0);
-                  //gl.enable(gl.DEPTH_TEST);
-                  Rotation = [0 , 0.5, 0];
-                  step = 0.1;
-                  initTexturesAndDraw(gl,Rotation, step);
-                  console.log('Izquierda');
-                  break;
-                case 'ArrowRight': //ArrowRight
-                  vertexesAndTextures = vertexesAndTextures_Derecha;
-                  initVertexShader(gl,vertexesAndTextures);
-                  //initProjection(gl, canvas);
-                  //gl.clearColor(0.0, 0.0, 0.0, 1.0);
-                  //gl.enable(gl.DEPTH_TEST);
-                  Rotation = [0 ,0.5 ,0];
-                  step = -0.1;
-                  initTexturesAndDraw(gl,Rotation, step);
-                  console.log('Derecha');
-                  break;
-                case 'ArrowUp':
-                  vertexesAndTextures = vertexesAndTextures_Arriba;
-                  initVertexShader(gl,vertexesAndTextures);
-                  Rotation = [0.5 ,0 ,0];
-                  step = -0.1;
-                  initTexturesAndDraw(gl,Rotation, step);
-                  console.log('Arriba');
-                  break;
-                case 'ArrowDown':
-                  vertexesAndTextures = vertexesAndTextures_Abajo;
-                  initVertexShader(gl,vertexesAndTextures);
-                  Rotation = [0.5 ,0 ,0];
-                  step = 0.1;
-                  initTexturesAndDraw(gl,Rotation, step);
-                  console.log('Arriba');
-                  break;
-                              }
-            }
+            initTexturesAndDraw(gl,0.0);
+            console.log("inicio");
+            document.onkeydown = function (ev) {
+             var step = new Number(document.getElementById("step").value);
+             switch (ev.key) {
+               case 'ArrowLeft':
+                 rotation = [0,0.5,0];
+                 count += step;
+                 // Init vertex shader
+                 initVertexShader(gl,vertexesAndTextures_Izquierda);
+                 initTexturesAndDraw(gl,count);
+                 break;
+              case 'ArrowRight':
+                rotation = [0,0.5,0];
+                count += -step;
+                initVertexShader(gl,vertexesAndTextures_Derecha);
+                initTexturesAndDraw(gl,count);
+                break;
+              case 'ArrowUp' :
+                rotation = [0.5,0,0];
+                count += -step;
+                initVertexShader(gl,vertexesAndTextures_Arriba);
+                initTexturesAndDraw(gl,count);
+                break;
+              case 'ArrowDown':
+                rotation = [0.5,0,0];
+                count += step;
+                initVertexShader(gl,vertexesAndTextures_Abajo);
+                initTexturesAndDraw(gl,count);
+                break;
+              case 'PageUp':
+                y += step;
+
+                initTexturesAndDraw(gl,count);
+                break;
+              case 'PageDown':
+                y += -step;
+                //rotation = [0.5,0,0];
+                initTexturesAndDraw(gl,count);
+                break;
+             };
+           };
         }
 
-        function initVertexShader(gl, vertexesAndTextures) {
-            // Vertexes and texture coordinates
-            // Giro a la izquierda
-
+        function initVertexShader(gl,vertexesAndTextures) {
             // Indexes
             var indexes = [
                 0, 1, 2,
@@ -300,7 +293,7 @@
         function initProjection(gl, canvas) {
             // Write u_pMatrix
             var pMatrixUniform = gl.getUniformLocation(gl.program, "u_pMatrix");
-            ratio = canvas.width / canvas.height;
+            var ratio = canvas.width / canvas.height;
             var pMatrix = mat4.perspective(mat4.create(), 150, ratio, 0.1, 100);
             gl.uniformMatrix4fv(pMatrixUniform, false, pMatrix);
 
@@ -310,7 +303,7 @@
             gl.uniformMatrix4fv(vMatrixUniform, false, vMatrix);
         }
 
-        function initTexturesAndDraw(gl,Rotation, step) {
+        function initTexturesAndDraw(gl,count) {
             var image = new Image();
             image.src = 'arrow.jpg';
             var image1 = new Image();
@@ -319,7 +312,7 @@
                 loadTexture(gl, "u_Sampler", image, 0, true);
                 image1.onload = function () {
                   loadTexture(gl,"u_Sampler1", image1, 1, true);
-                  drawScene(gl,Rotation,step);
+                  drawScene(count);
                 };
                 //drawScene();
             };
@@ -340,21 +333,28 @@
             gl.uniform1i(fragmentSamplerUniform, unitNumber);
         }
 
-        function drawScene(gl,Rotation,step) {
+        function drawScene() {
             // Clear
             gl.clear(gl.COLOR_BUFFER_BIT);
 
             // Rotate
-            //var mvMatrix = mat4.fromRotation(mat4.create(), count, [0, step_x, 0]);
-            var mvMatrix = mat4.fromRotation(mat4.create(), count, Rotation);
+            console.log(rotation);
+            var mvMatrix = mat4.fromRotation(mat4.create(), count, rotation);
             var uMvMatrix = gl.getUniformLocation(gl.program, "u_mvMatrix");
             gl.uniformMatrix4fv(uMvMatrix, false, mvMatrix);
+
+            //initProjection
+            // Write u_vMatrix
+            var vMatrixUniform = gl.getUniformLocation(gl.program, "u_vMatrix");
+            var vMatrix = mat4.lookAt(mat4.create(), [0, y, z], [0, 0, 0], [0, 1, 0]);
+            console.log(z);
+            gl.uniformMatrix4fv(vMatrixUniform, false, vMatrix);
 
             // Draw
             gl.drawElements(gl.TRIANGLES, 6 * 2 * 3, gl.UNSIGNED_SHORT, 0);
 
             // Call drawScene again in the next browser repaint
-            count += step;
+            //count += 0.01;
             //requestAnimationFrame(drawScene);
         }
 
@@ -394,6 +394,7 @@
     <canvas id="myCanvas" width="640" height="480"></canvas>
     <br>
     Step: <input type="text" value="0.01" id="step">
+
 </body>
 
 </html>
