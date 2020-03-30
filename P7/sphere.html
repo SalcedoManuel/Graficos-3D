@@ -2,58 +2,55 @@
 <html>
 
 <head>
-    <title>WebGL textures: sphere lit by ambient and directional light</title>
+    <title>WebGL textures: sphere</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"></script>
 
     <script id="shaderVs" type="x-shader/x-vertex">
-        attribute vec3 a_Color;
-        attribute vec3 a_Normal;
+
         attribute vec4 a_Position;
-
         attribute vec2 a_TexCoord;
-
-        uniform vec3 u_LightColor;
-        uniform vec3 u_LightDirection;
-        uniform vec3 u_AmbientLight;
+        attribute vec3 a_Normal;
 
         uniform mat4 u_pMatrix;
         uniform mat4 u_vMatrix;
         uniform mat4 u_mvMatrix;
+        uniform mat4 u_NormalMatrix;
 
         varying vec2 v_TexCoord;
-        varying highp vec4 v_Color;
+        varying vec4 transformedNormal;
 
         void main() {
             gl_Position = u_pMatrix * u_vMatrix * u_mvMatrix * a_Position;
-
-            vec3 normal = normalize(a_Normal);
-            float nDotl = max(dot(u_LightDirection, normal), 0.0);
-
-            vec3 diffuse = u_LightColor * a_Color.rgb * nDotl;
-            vec3 ambient = u_AmbientLight * a_Color.rgb;
-            v_Color = vec4(diffuse + ambient, 1.0);
-
             v_TexCoord = a_TexCoord;
+
+            transformedNormal = u_NormalMatrix * vec4(a_Normal, 1.0);
         }
     </script>
 
     <script id="shaderFs" type="x-shader/x-fragment">
         precision highp float;
-        precision mediump float;
         uniform sampler2D u_Sampler;
-        varying vec2 v_TexCoord;
 
-        varying highp vec4 v_Color;
+        uniform vec3 u_AmbientLight;
+        uniform vec3 u_LightColor;
+        uniform vec3 u_LightDirection;
+
+        varying vec2 v_TexCoord;
+        varying vec4 transformedNormal;
 
         void main(void) {
-            //gl_FragColor = texture2D(u_Sampler, v_TexCoord);
-            gl_FragColor = v_Color;
+            vec4 text = texture2D(u_Sampler, v_TexCoord);
+            float nDotL = max(dot(u_LightDirection, normalize(transformedNormal.xyz)), 0.0);
+            vec3 ambient = u_AmbientLight * text.rgb;
+            vec3 diffuse = u_LightColor * text.rgb * nDotL;
+            gl_FragColor = vec4(diffuse + ambient, 1.0);
         }
     </script>
 
     <script>
         var gl;
+        var canvas;
         var count = 0.0;
         const LATITUDE_BANDS = 30;
         const LONGITUDE_BANDS = 30;
@@ -88,12 +85,13 @@
             gl.enable(gl.DEPTH_TEST);
 
             // Init textures
-            initTexturesAndDraw();
+            initTexturesAndDraw(gl, canvas);
         }
 
         function initVertexShader(gl) {
             // Vertexes and textures coordinates
             var vertexesAndTextures = [];
+            var normals = [];
             for (var i = 0; i <= LATITUDE_BANDS; i++) {
                 var theta = i * Math.PI / LATITUDE_BANDS;
                 var sinTheta = Math.sin(theta);
@@ -108,6 +106,12 @@
                     var y = cosTheta;
                     var z = cosPhi * sinTheta;
 
+                    //Introduce Normals in Array
+                    normals.push(x);
+                    normals.push(y);
+                    normals.push(z);
+
+                    //Introduce vertexesAndTextures
                     vertexesAndTextures.push(RADIUS * x);
                     vertexesAndTextures.push(RADIUS * y);
                     vertexesAndTextures.push(RADIUS * z);
@@ -145,50 +149,41 @@
             gl.enableVertexAttribArray(vertexPositionAttribute);
             gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 4 * (3 + 2), 0);
 
-            //var vertexColorAttribute = gl.getAttribLocation(gl.program, "a_Color");
-            //gl.enableVertexAttribArray(vertexColorAttribute);
-            //gl.vertexAttribPointer(vertexColorAttribute, 3, gl.FLOAT, false, 4 * (3 + 2), 0);
-
             var vertexColorAttribute = gl.getAttribLocation(gl.program, "a_TexCoord");
             gl.enableVertexAttribArray(vertexColorAttribute);
             gl.vertexAttribPointer(vertexColorAttribute, 2, gl.FLOAT, false, 4 * (3 + 2), 4 * 3);
 
-            // Write indexes in gl.ELEMENT_ARRAY_BUFFER
+            // Write indexes in gl.ELEMENT_ARRAY_BUFFER and normals in gl.ARRAY_BUFFER
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
             gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexes), gl.STATIC_DRAW);
+            gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
 
             var vertexNormalAttribute = gl.getAttribLocation(gl.program, "a_Normal");
             gl.enableVertexAttribArray(vertexNormalAttribute);
-            gl.vertexAttribPointer(vertexNormalAttribute, 3, gl.FLOAT, false, 4 * (3 + 2), 0);
+            gl.vertexAttribPointer(vertexNormalAttribute,3,gl.FLOAT, false, 0, 0);
+
+            //
         }
 
         function initProjection(gl, canvas) {
             // Write u_pMatrix
             var pMatrixUniform = gl.getUniformLocation(gl.program, "u_pMatrix");
             var ratio = canvas.width / canvas.height;
-            var pMatrix = mat4.perspective(mat4.create(), 150, ratio, 0.1, 100);
+            var pMatrix = mat4.perspective(mat4.create(), 0.9, ratio, 0.1, 100);
             gl.uniformMatrix4fv(pMatrixUniform, false, pMatrix);
 
             // Write u_vMatrix
             var vMatrixUniform = gl.getUniformLocation(gl.program, "u_vMatrix");
-            var vMatrix = mat4.lookAt(mat4.create(), [0, 0, -3], [0, 0, 0], [0, 1, 0]);
+            var vMatrix = mat4.lookAt(mat4.create(), [0, 0, 3], [0, 0, 0], [0, 1, 0]);
             gl.uniformMatrix4fv(vMatrixUniform, false, vMatrix);
 
-            // Write u_AmbientLight
-            //var r = 0.1;
-            //var g = 0.1;
-            //var b = 0.1;
-            //var ambientLight = [ r, g, b ];
-            //var ambientLight = [0.1,0.1,0.1];
-            //var ambientLightUniform = gl.getUniformLocation(gl.program, "u_AmbientLight");
-            //gl.uniform3fv(ambientLightUniform, ambientLight);
-
-            // Write u_LightColor
-            var lightColor = [ 1.0, 1.0, 1.0 ]; // white
+            //Write u_LightColor
+            var lightColor = [1.0, 1.0, 1.0];
             var lightColorUniform = gl.getUniformLocation(gl.program, "u_LightColor");
             gl.uniform3fv(lightColorUniform, lightColor);
 
-            // Write u_LightDirection
+            //Write u_LightDirection
             var x = document.getElementById("x").value;
             var y = document.getElementById("y").value;
             var z = document.getElementById("z").value;
@@ -196,14 +191,21 @@
             vec3.normalize(lightDirection, lightDirection);
             var lightDirectionUniform = gl.getUniformLocation(gl.program, "u_LightDirection");
             gl.uniform3fv(lightDirectionUniform, lightDirection);
+
+            //Write u_AmbientLight
+            var ambientLight = [0.1,0.1,0.1];
+            var ambientLightUniform = gl.getUniformLocation(gl.program, "u_AmbientLight");
+            gl.uniform3fv(ambientLightUniform, ambientLight);
+
+
         }
 
-        function initTexturesAndDraw() {
+        function initTexturesAndDraw(gl, canvas) {
             var image = new Image();
             image.src = 'deathstar.png';
             image.onload = function () {
                 loadTexture(gl, "u_Sampler", image, 0, false);
-                drawScene();
+                drawScene(gl, canvas);
             };
         }
 
@@ -222,24 +224,32 @@
             gl.uniform1i(fragmentSamplerUniform, unitNumber);
         }
 
-        function drawScene() {
+        function drawScene(gl, canvas) {
             // Clear
             gl.clear(gl.COLOR_BUFFER_BIT);
 
             // Init projection
-            //initProjection(gl, canvas);
+            initProjection(gl, canvas);
 
             // Rotate
             var mvMatrix = mat4.fromRotation(mat4.create(), count, [0, 0.5, 0]);
             var uMvMatrix = gl.getUniformLocation(gl.program, "u_mvMatrix");
             gl.uniformMatrix4fv(uMvMatrix, false, mvMatrix);
 
+            // Get the normal direction using the model Matrix
+            var normalMatrixInvert = mat4.invert(mat4.create(), mvMatrix);
+            var normalMatrixInvertTranspose = mat4.transpose(mat4.create(), normalMatrixInvert);
+            var normalUniformMatrix = gl.getUniformLocation(gl.program, "u_NormalMatrix");
+            gl.uniformMatrix4fv(normalUniformMatrix, false, normalMatrixInvertTranspose);
+
             // Draw
             gl.drawElements(gl.TRIANGLES, LATITUDE_BANDS * LONGITUDE_BANDS * 3 * 2, gl.UNSIGNED_SHORT, 0);
 
             // Call drawScene again in the next browser repaint
             count += 0.01;
-            //requestAnimationFrame(drawScene);
+            requestAnimationFrame(function() {
+              drawScene(gl, canvas)
+            });
         }
 
         function initShaders(gl, vs_source, fs_source) {
@@ -276,11 +286,10 @@
 
 <body onload="init()">
     <canvas id="myCanvas" width="640" height="480"></canvas><br>
-
-    <b>Light direction</b><br>
-    <input type="range" id="x" min="-20" max="20" value="15" step="1">X<br>
-    <input type="range" id="y" min="-20" max="20" value="5" step="1">Y<br>
-    <input type="range" id="z" min="-20" max="20" value="10" step="1">Z<br>
+      <b>Light direction</b><br>
+      <input type="range" id="x" min="-20" max="20" value="-15" step="1">X<br>
+      <input type="range" id="y" min="-20" max="20" value="5" step="1">Y<br>
+      <input type="range" id="z" min="-20" max="20" value="10" step="1">Z<br>
 </body>
 
 </html>
