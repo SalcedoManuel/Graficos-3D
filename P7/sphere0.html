@@ -227,8 +227,6 @@
             // Clear
             gl.clear(gl.COLOR_BUFFER_BIT);
 
-            // Init projection
-            //initProjection(gl, canvas); //Llamamos al initProjection para actualizar la iluminación
             //Write u_LightDirection
             var x = document.getElementById("x").value;
             var y = document.getElementById("y").value;
@@ -237,7 +235,7 @@
             vec3.normalize(lightDirection, lightDirection);
             var lightDirectionUniform = gl.getUniformLocation(gl.program, "u_LightDirection");
             gl.uniform3fv(lightDirectionUniform, lightDirection);
-            
+
             // Rotate
             var mvMatrix = mat4.fromRotation(mat4.create(), count, [0, 0.5, 0]);
             var uMvMatrix = gl.getUniformLocation(gl.program, "u_mvMatrix");
