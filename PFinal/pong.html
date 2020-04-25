@@ -2,67 +2,146 @@
 <html>
 
 <head>
-<title>Three.js: Collision detection</title>
+<title>Pong</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/103/three.min.js"></script>
 
 <script>
-   var stepX = 0.15;
-   var stepY = 0.25;
+   var stepX = 0.10;
+   var stepY = 0.15;
+   var start = false;
+   var count_user = 0;
+   var count_cpu = 0;
 
    function init() {
+      const canvas = document.querySelector('#c');
       var scene = new THREE.Scene();
+      //Anchura de la escena
       var sceneWidth = window.innerWidth - 20;
+      //Altura del escenario
       var sceneHeight = window.innerHeight - 20;
-
+      //Perspectiva de la cámara.(Ángulo en grados de la cámara,relación de aspecto, Corte cercano, Corte lejano)
       var camera = new THREE.PerspectiveCamera(90, sceneWidth / sceneHeight, 0.01, 100);
-      camera.position.set(0, -10, 15);
+      //Posición de la cámara
+      camera.position.set(0, -10, 5);
       camera.lookAt(scene.position);
-
+      //Suavizado de bordes activado
       var renderer = new THREE.WebGLRenderer({
-         antialias : true
+         antialias : true,
       });
+      //Habilitamos la sombra en el renderer
       renderer.shadowMap.enabled = true;
       renderer.setSize(sceneWidth, sceneHeight);
       document.body.appendChild(renderer.domElement);
+      background(scene);
+
+      text("count", scene,'Cartago ' + count_cpu +'-'+ count_user+' Roma');
+      count = [count_cpu,count_user];
+
+      renderer.render(scene, camera);
 
       var light = getLight();
+      var ambient_light = getAmbient_Light();
+      //getBorder(lugar,ancho_x,profundidad_y,altura_z,donde empezamos a contar_X,Y y Z)
       var leftBorder = getBorder("left", 1, 20, 2, -5, 0, 0);
       var rightBorder = getBorder("right", 1, 20, 2, 5, 0, 0);
-      var topBorder = getBorder("top", 11, 1, 2, 0, 10, 0);
-      var downBorder = getBorder("down", 9, 1, 2, 0, -9.5, 0);
+      var topBorder = getBorder("top_border", 11, 1, 2, 0, 10, 0);
+      var downBorder = getBorder("down_border", 9, 1, 2, 0, -9.5, 0);
+
+      var cpuBorder = getBorder("top", 2, 0.5, 2, 0, 8.5, 1);
+      var userBorder = getBorder("down", 2, 1, 2, 0, -8.5, 1);
+
       var sphere = getSphere();
+      var sphere_border1 = getSphere_Border(-4.8,9.7);
+      var sphere_border2 = getSphere_Border(4.8,-9.2);
+      var sphere_border3 = getSphere_Border(-4.8,-9.2);
+      var sphere_border4 = getSphere_Border(4.8,9.7);
       var floor = getFloor();
 
+      var floor_oval = Oval_Scenario();
+      var lateral_derecho = getGrada(12,0,0,-1,15,38);
+      var lateral_izquierdo = getGrada(-12,0,0,1,15,38);
+      var fondo_norte = getGrada(0,15,1,0,32,15);
+      var border_fondo = getBorder("fondo_up",36,1,13,0,20,0)
+      var border_lateral_right = getBorder("border_lateral_right",1,42,13,17,0,0);
+      var border_lateral_left = getBorder("border_lateral_left",1,42,13,-17,0,0);
+
+      //Añadimos los elementos al escenario
       scene.add(light);
+      scene.add(ambient_light);
       scene.add(leftBorder);
       scene.add(rightBorder);
       scene.add(topBorder);
       scene.add(downBorder);
+
+      scene.add(cpuBorder);
+      scene.add(userBorder);
+
       scene.add(sphere);
+      scene.add(sphere_border1);
+      scene.add(sphere_border2);
+      scene.add(sphere_border3);
+      scene.add(sphere_border4);
       scene.add(floor);
 
-      var borders = [ leftBorder, rightBorder, topBorder, downBorder ];
+      scene.add(floor_oval);
 
-      animate(sphere, borders, renderer, scene, camera);
-   }
+      scene.add(lateral_derecho);
+      scene.add(fondo_norte);
+      scene.add(lateral_izquierdo);
 
-   function animate(sphere, borders, renderer, scene, camera) {
-      checkCollision(sphere, borders);
+      scene.add(border_fondo)
+      scene.add(border_lateral_right);
+      scene.add(border_lateral_left);
 
-      sphere.position.x += stepX;
-      sphere.position.y += stepY;
+      var borders = [ leftBorder, rightBorder, cpuBorder, userBorder];
 
+        animate(sphere, borders, renderer, scene, camera,count);
+
+ }
+
+   function animate(sphere, borders, renderer, scene, camera,count) {
+     if (start) {
+       checkCollision(sphere, borders, count[0], count[1], scene);
+       movement_ball(sphere);
+     }
+      movement_borders(borders,sphere);
       renderer.render(scene, camera);
 
-      requestAnimationFrame(function() {
-         animate(sphere, borders, renderer, scene, camera);
-      });
-   }
+        requestAnimationFrame(function() {
+           animate(sphere, borders, renderer, scene, camera,count);
+        });
 
+   }
+   function movement_ball(sphere) {
+     sphere.position.x += stepX;
+     sphere.position.y += stepY;
+
+   }
+   function movement_borders(borders,sphere) {
+     borders[2].position.x = sphere.position.x;
+     //borders[3].position.x = sphere.position.x;
+     document.onkeydown = function (ev){
+       switch (ev.key) {
+         case 'ArrowLeft':
+          borders[3].position.x += -0.3;
+          break;
+        case 'ArrowRight':
+          borders[3].position.x += +0.3;
+          break;
+        case 'Enter':
+          if (!start) {
+            start = true;
+          }
+          break;
+       default:
+
+       }
+     }
+   }
    function getLight() {
       var light = new THREE.DirectionalLight();
-      light.position.set(4, 4, 4);
+      light.position.set(-4, -2, 4);
       light.castShadow = true;
       light.shadow.camera.near = 0;
       light.shadow.camera.far = 16;
@@ -74,49 +153,124 @@
       light.shadow.mapSize.height = 4096;
       return light;
    }
-
+   function getAmbient_Light() {
+     var ambient_light = new THREE.AmbientLight(0X404040);
+     return ambient_light;
+   }
    function getSphere() {
       var geometry = new THREE.SphereGeometry(1, 20, 20);
-      var material = new THREE.MeshNormalMaterial();
-      var mesh = new THREE.Mesh(geometry, material);
+      //var material = new THREE.MeshNormalMaterial();
+      //var mesh = new THREE.Mesh(geometry, material);
+      var mesh = new THREE.Mesh(geometry, getMaterial("bronce.jpg",4,4));
       mesh.position.z = 1;
+      mesh.rotation.x = 1;
       mesh.castShadow = true;
       mesh.name = "sphere";
 
       return mesh;
    }
+   function getSphere_Border(x,y) {
+      var geometry = new THREE.SphereGeometry(0.8, 20, 20);
+      //var material = new THREE.MeshNormalMaterial();
+      //var mesh = new THREE.Mesh(geometry, material);
+      var mesh = new THREE.Mesh(geometry, getMaterial("wood.png",4,4));
+      mesh.position.z = 1.8;
+      mesh.position.y = y;
+      mesh.position.x = x;
+      mesh.castShadow = true;
+      mesh.name = "sphere";
 
+      return mesh;
+   }
+   function Oval_Scenario() {
+     var geometry = new THREE.PlaneGeometry(25, 30);
+     var mesh = new THREE.Mesh(geometry, getMaterial("arena.jpg",25,25));
+     mesh.receiveShadow = true;
+     mesh.position.z = -0.1;
+     return mesh;
+   }
+   function getGrada(x,y,rot_x,rot_y,tam_x,tam_y) {
+     var geometry = new THREE.PlaneGeometry(tam_x,tam_y);
+     if (tam_x>tam_y) {
+       var mesh = new THREE.Mesh(geometry, getMaterial("sillar_piedra_fondo.jpg",20,10));
+     }else {
+       var mesh = new THREE.Mesh(geometry, getMaterial("sillar_piedra.jpg",10,20));
+     }
+     mesh.position.x = x;
+     mesh.position.y = y;
+     mesh.rotation.x = rot_x;
+     mesh.rotation.y = rot_y;
+     mesh.receiveShadow = true;
+     return mesh;
+   }
    function getFloor() {
       var geometry = new THREE.PlaneGeometry(10, 20);
-      var mesh = new THREE.Mesh(geometry, getWoodMaterial());
+      var mesh = new THREE.Mesh(geometry, getMaterial("marmol.jpg",1,1));
       mesh.receiveShadow = true;
 
       return mesh;
    }
-
    function getBorder(name, x, y, z, posX, posY, posZ) {
       var geometry = new THREE.BoxGeometry(x, y, z);
-      var mesh = new THREE.Mesh(geometry, getWoodMaterial());
+      if (name == "top") {
+        var mesh = new THREE.Mesh(geometry, getMaterial("carthago.png",1,1));
+      }else if (name == "down") {
+        var mesh = new THREE.Mesh(geometry, getMaterial("rome.jpg",1,1));
+      }else if (name == "border_lateral_right") {
+        var mesh = new THREE.Mesh(geometry, getMaterial("col.jpg",300,3));
+      }
+      else {
+        var mesh = new THREE.Mesh(geometry, getMaterial("col.jpg",1,3));
+      }
       mesh.receiveShadow = true;
       mesh.position.set(posX, posY, posZ);
       mesh.name = name;
 
       return mesh;
    }
+   function getMaterial(name,rows,column) {
+     var texture = new THREE.TextureLoader().load(name);
+     var material = new THREE.MeshPhysicalMaterial({
+        map : texture
+     });
+     material.map.wrapS = material.map.wrapT = THREE.RepeatWrapping;
+     material.map.repeat.set(column, rows);
+     material.side = THREE.DoubleSide;
 
-   function getWoodMaterial() {
-      var texture = new THREE.TextureLoader().load("wood.png");
-      var material = new THREE.MeshPhysicalMaterial({
-         map : texture
-      });
-      material.map.wrapS = material.map.wrapT = THREE.RepeatWrapping;
-      material.map.repeat.set(4, 4);
-      material.side = THREE.DoubleSide;
-
-      return material;
+     return material;
    }
+   function background(scene) {
+     const fondo = new THREE.TextureLoader();
+     const bgTexture = fondo.load('cielo.jpg');
+     scene.background = bgTexture;
+   }
+   function text(name, scene, txt) {
+     var loader = new THREE.FontLoader();
+     loader.load('helvetiker_regular.typeface.json', function (font) {
+       var selectedObject = scene.getObjectByName(name);
+       if (selectedObject) {
+         scene.remove(selectedObject);
+       }
+       var textGeometry = new THREE.TextGeometry(txt,{
+        font: font,
+        size: 1.5,
+        height: 0.1,
+        curveSegments: 12,
+        bevelEnabled: false,
+        bevelThickness: 0.1,
+        bevelSize: 0.1,
+        bevelOffset: 0,
+        bevelSegments: 1,
+      } );
+     var txt_mat = new THREE.MeshBasicMaterial({color:0xFFA000});
+     var txt_mesh = new THREE.Mesh(textGeometry, txt_mat);
+     txt_mesh.name = name;
+     txt_mesh.position.set(-8.5,0,6);
+     txt_mesh.rotation.x = -5;
+     scene.add(txt_mesh);
+   });}
 
-   function checkCollision(sphere, borders) {
+   function checkCollision(sphere, borders, count_cpu,count_user,scene) {
       var originPosition = sphere.position.clone();
 
       for (var i = 0; i < sphere.geometry.vertices.length; i++) {
@@ -133,7 +287,20 @@
             if (collisionResults[0].object.name == "down" || collisionResults[0].object.name == "top") {
                stepY *= -1;
             }
+
             break;
+         }
+         if (sphere.position.y < -9 || sphere.position.y > 10) {
+            start = false;
+            if (sphere.position.y < -8.9) {
+              count_cpu += 1;
+            }else {
+              count_user+= 1;
+            }
+            text("count",scene,'Cartago ' + count_cpu +'-'+ count_user+' Roma');
+            sphere.position.x = 0;
+            sphere.position.y = 0;
+            console.log("Goool!!");
          }
       }
    }

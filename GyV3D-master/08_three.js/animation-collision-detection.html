@@ -49,7 +49,7 @@
 
    function animate(sphere, borders, renderer, scene, camera) {
       checkCollision(sphere, borders);
-      
+
       sphere.position.x += stepX;
       sphere.position.y += stepY;
 
@@ -132,7 +132,7 @@
             }
             if (collisionResults[0].object.name == "down" || collisionResults[0].object.name == "top") {
                stepY *= -1;
-            }            
+            }
             break;
          }
       }
