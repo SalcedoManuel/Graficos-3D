@@ -10,8 +10,13 @@
    var stepX = 0.10;
    var stepY = 0.15;
    var start = false;
-   var count_user = 0;
-   var count_cpu = 0;
+   var colision_top = true;
+   var colision_down = false;
+
+   var combo;
+   var teams = ['Roma','Cartago'];
+   var position_text = [-8.5,0,6];
+   var team_ok = false;
 
    function init() {
       const canvas = document.querySelector('#c');
@@ -23,7 +28,7 @@
       //Perspectiva de la cámara.(Ángulo en grados de la cámara,relación de aspecto, Corte cercano, Corte lejano)
       var camera = new THREE.PerspectiveCamera(90, sceneWidth / sceneHeight, 0.01, 100);
       //Posición de la cámara
-      camera.position.set(0, -10, 5);
+      camera.position.set(0, -15, 5);
       camera.lookAt(scene.position);
       //Suavizado de bordes activado
       var renderer = new THREE.WebGLRenderer({
@@ -34,8 +39,9 @@
       renderer.setSize(sceneWidth, sceneHeight);
       document.body.appendChild(renderer.domElement);
       background(scene);
-
-      text("count", scene,'Cartago ' + count_cpu +'-'+ count_user+' Roma');
+      count_cpu = 0;
+      count_user = 0;
+      text("txt_mesh", scene,teams[1] + ' ' + count_cpu +'-'+ count_user+' '+ teams[0]);
       count = [count_cpu,count_user];
 
       renderer.render(scene, camera);
@@ -43,19 +49,19 @@
       var light = getLight();
       var ambient_light = getAmbient_Light();
       //getBorder(lugar,ancho_x,profundidad_y,altura_z,donde empezamos a contar_X,Y y Z)
-      var leftBorder = getBorder("left", 1, 20, 2, -5, 0, 0);
-      var rightBorder = getBorder("right", 1, 20, 2, 5, 0, 0);
-      var topBorder = getBorder("top_border", 11, 1, 2, 0, 10, 0);
-      var downBorder = getBorder("down_border", 9, 1, 2, 0, -9.5, 0);
+      var leftBorder = getBorder("left", 1, 24, 2, -6.5, 0, 0);
+      var rightBorder = getBorder("right", 1, 24, 2, 6.5, 0, 0);
+      var topBorder = getBorder("top_border", 14, 1, 2, 0, 12, 0);
+      var downBorder = getBorder("down_border", 14, 1, 2, 0, -12, 0);
 
-      var cpuBorder = getBorder("top", 2, 0.5, 2, 0, 8.5, 1);
-      var userBorder = getBorder("down", 2, 1, 2, 0, -8.5, 1);
+      var cpuBorder = getBorder("top", 2, 2, 2, 0, 10, 1);
+      var userBorder = getBorder("down", 2, 2, 2, 0, -10, 1);
 
       var sphere = getSphere();
-      var sphere_border1 = getSphere_Border(-4.8,9.7);
-      var sphere_border2 = getSphere_Border(4.8,-9.2);
-      var sphere_border3 = getSphere_Border(-4.8,-9.2);
-      var sphere_border4 = getSphere_Border(4.8,9.7);
+      var sphere_border1 = getSphere_Border(-6,12);
+      var sphere_border2 = getSphere_Border(6,-12);
+      var sphere_border3 = getSphere_Border(-6,-12);
+      var sphere_border4 = getSphere_Border(6,12);
       var floor = getFloor();
 
       var floor_oval = Oval_Scenario();
@@ -95,39 +101,71 @@
       scene.add(border_lateral_left);
 
       var borders = [ leftBorder, rightBorder, cpuBorder, userBorder];
-
+      if (team_ok) {
+        text("txt_mesh",scene,teams[1]+' ' + count[0] +'-'+ count[1]+' ' +teams[0]);
         animate(sphere, borders, renderer, scene, camera,count);
+      }else {
+        select_team(scene,teams);
+        animate(sphere, borders, renderer, scene, camera,count);
+      }
 
  }
-
+   function select_team(scene,teams) {
+     document.onkeydown = function (ev){
+       switch (ev.key) {
+         case '1':
+          teams[0] = 'Roma';
+          team_ok = true;
+          break;
+        case '2':
+          teams[0] = 'Egipto';
+          team_ok = true;
+          break;
+        case '3':
+          teams[0] = 'Hispania';
+          team_ok = true;
+          break;
+       default:
+       console.log("No team");
+       }
+     }
+   }
    function animate(sphere, borders, renderer, scene, camera,count) {
      if (start) {
-       checkCollision(sphere, borders, count[0], count[1], scene);
+       checkCollision(sphere, borders, count, scene);
        movement_ball(sphere);
      }
       movement_borders(borders,sphere);
       renderer.render(scene, camera);
-
         requestAnimationFrame(function() {
            animate(sphere, borders, renderer, scene, camera,count);
-        });
-
-   }
+        }); }
    function movement_ball(sphere) {
      sphere.position.x += stepX;
      sphere.position.y += stepY;
-
+     sphere.rotation.x += stepX;
+     sphere.rotation.y += stepY;
+   }
+   function movement_CPU(borders,sphere) {
+     if (borders[2].position.x < sphere.position.x) {
+        borders[2].position.x += 0.05;
+     }else if (borders[2].position.x > sphere.position.x) {
+         borders[2].position.x += -0.05;
+     }
    }
    function movement_borders(borders,sphere) {
-     borders[2].position.x = sphere.position.x;
-     //borders[3].position.x = sphere.position.x;
+     movement_CPU(borders,sphere);
      document.onkeydown = function (ev){
        switch (ev.key) {
          case 'ArrowLeft':
-          borders[3].position.x += -0.3;
+         if (borders[3].position.x > -5) {
+             borders[3].position.x += -0.3;
+         }
           break;
         case 'ArrowRight':
+        if (borders[3].position.x < 5) {
           borders[3].position.x += +0.3;
+        }
           break;
         case 'Enter':
           if (!start) {
@@ -139,6 +177,7 @@
        }
      }
    }
+
    function getLight() {
       var light = new THREE.DirectionalLight();
       light.position.set(-4, -2, 4);
@@ -157,11 +196,12 @@
      var ambient_light = new THREE.AmbientLight(0X404040);
      return ambient_light;
    }
+
    function getSphere() {
       var geometry = new THREE.SphereGeometry(1, 20, 20);
       //var material = new THREE.MeshNormalMaterial();
       //var mesh = new THREE.Mesh(geometry, material);
-      var mesh = new THREE.Mesh(geometry, getMaterial("bronce.jpg",4,4));
+      var mesh = new THREE.Mesh(geometry, getMaterial("metal.jpg",1,1));
       mesh.position.z = 1;
       mesh.rotation.x = 1;
       mesh.castShadow = true;
@@ -203,8 +243,9 @@
      mesh.receiveShadow = true;
      return mesh;
    }
+
    function getFloor() {
-      var geometry = new THREE.PlaneGeometry(10, 20);
+      var geometry = new THREE.PlaneGeometry(14, 24);
       var mesh = new THREE.Mesh(geometry, getMaterial("marmol.jpg",1,1));
       mesh.receiveShadow = true;
 
@@ -216,10 +257,9 @@
         var mesh = new THREE.Mesh(geometry, getMaterial("carthago.png",1,1));
       }else if (name == "down") {
         var mesh = new THREE.Mesh(geometry, getMaterial("rome.jpg",1,1));
-      }else if (name == "border_lateral_right") {
-        var mesh = new THREE.Mesh(geometry, getMaterial("col.jpg",300,3));
-      }
-      else {
+      }else if (name == "down_border") {
+        var mesh = new THREE.Mesh(geometry, getMaterial("col.jpg",1,24));
+      }else {
         var mesh = new THREE.Mesh(geometry, getMaterial("col.jpg",1,3));
       }
       mesh.receiveShadow = true;
@@ -265,12 +305,11 @@
      var txt_mat = new THREE.MeshBasicMaterial({color:0xFFA000});
      var txt_mesh = new THREE.Mesh(textGeometry, txt_mat);
      txt_mesh.name = name;
-     txt_mesh.position.set(-8.5,0,6);
+     txt_mesh.position.set(position_text[0],position_text[1],position_text[2]);
      txt_mesh.rotation.x = -5;
      scene.add(txt_mesh);
    });}
-
-   function checkCollision(sphere, borders, count_cpu,count_user,scene) {
+   function checkCollision(sphere, borders, count,scene) {
       var originPosition = sphere.position.clone();
 
       for (var i = 0; i < sphere.geometry.vertices.length; i++) {
@@ -282,25 +321,59 @@
          if (collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()) {
             // Collision detected
             if (collisionResults[0].object.name == "left" || collisionResults[0].object.name == "right") {
-               stepX *= -1;
+              stepX *= -1;
             }
             if (collisionResults[0].object.name == "down" || collisionResults[0].object.name == "top") {
-               stepY *= -1;
+                if (collisionResults[0].object.name == "down" && colision_down) {
+                  stepY *= -1;
+                }else if (collisionResults[0].object.name == "top" && colision_top) {
+                  stepY *= -1;
+                }
+                if (collisionResults[0].object.name == "down") {
+                    colision_down = false;
+                    colision_top = true;
+                }else {
+                  colision_top = false;
+                  colision_down = true;
+                }
+               //stepY *= -1;
+               x = stepX;
+               y = stepY;
+               if (combo) {
+                 combo = false;
+                 stepX *= (1/6);
+                 stepY *= (1/5);
+               }
+               if (collisionResults[0].distance > 0.99 && !(combo)) {
+                 combo = true;
+                 stepX *= 6;
+                 stepY *= 5;
+               }
             }
 
             break;
          }
-         if (sphere.position.y < -9 || sphere.position.y > 10) {
-            start = false;
-            if (sphere.position.y < -8.9) {
-              count_cpu += 1;
+
+         if (sphere.position.y < -10 || sphere.position.y > 10) {
+            if (sphere.position.y < -10) {
+              count[0] += 1;
             }else {
-              count_user+= 1;
+              count[1]+= 1;
             }
-            text("count",scene,'Cartago ' + count_cpu +'-'+ count_user+' Roma');
+            start = false;
+            text("txt_mesh",scene,teams[1]+' ' + count[0] +'-'+ count[1]+' ' +teams[0]);
             sphere.position.x = 0;
             sphere.position.y = 0;
-            console.log("Goool!!");
+            if (combo) {
+              combo = false;
+              stepX *= (1/6);
+              stepY *= (1/5);
+            }
+            if (count[0] == 5 ||count[1] == 5) {
+              stepX = 0;
+              stepY = 0;
+            }
+
          }
       }
    }
