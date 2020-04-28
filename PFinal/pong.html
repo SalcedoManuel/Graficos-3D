@@ -133,15 +133,16 @@
 
    function movement_ball(sphere) {
      if (saque) {
-       step_X = stepX/2;
-       step_Y = stepY/2;
+       step_Y = stepY/4;
+       console.log(saque);
      }else {
-       step_X = stepX;
        step_Y = stepY;
      }
-     sphere.position.x += step_X;
+
+     sphere.position.x += stepX;
      sphere.position.y += step_Y;
-     sphere.rotation.x += step_X;
+
+     sphere.rotation.x += stepX;
      sphere.rotation.y += step_Y;
    }
    function movement_CPU(borders,sphere) {
@@ -436,13 +437,12 @@
               stepX *= -1;
             }
             if (collisionResults[0].object.name == "down" || collisionResults[0].object.name == "top") {
-                step_Y = 0.15
                 if (collisionResults[0].object.name == "down" && colision_down) {
                   stepY *= -1;
                 }else if (collisionResults[0].object.name == "top" && colision_top) {
                   stepY *= -1;
                 }
-              //step_Y *= -1;
+                saque = false;
                 if (collisionResults[0].object.name == "down") {
                     colision_down = false;
                     colision_top = true;
@@ -452,12 +452,11 @@
                 }
                 distance_sphere_user = (((sphere.position.x - borders[3].position.x)**2)+(sphere.position.y - borders[3].position.y)**2)**(1/2);
                 distance_sphere_cpu = (((sphere.position.x - borders[2].position.x)**2)+(sphere.position.y - borders[2].position.y)**2)**(1/2);
-                console.log(distance_sphere_user);
                if (combo) {
                  combo = false;
                  stepX = 0.10;
                }
-               if ((distance_sphere_user > 2 && distance_sphere_user < 10) || (distance_sphere_cpu > 2 &&  distance_sphere_cpu < 10)) {
+               if ((distance_sphere_user > 2 && distance_sphere_user < 10) || (distance_sphere_cpu > 2 &&  distance_sphere_cpu < 10) && !saque) {
                  combo = true;
                  if (distance_sphere_user < distance_sphere_cpu) {
                    stepX += (distance_sphere_user - 2);
@@ -485,10 +484,9 @@
             text("txt_mesh",scene,teams[1]+' ' + count[0] +'-'+ count[1]+' ' +teams[0]);
             sphere.position.x = 0;
             sphere.position.y = 0;
-            step_Y = 0.8;
             if (combo) {
               combo = false;
-              stepX = 0.15;
+              stepX = 0.10;
             }
             if (count[0] == 5 ||count[1] == 5) {
               stepX = 0;
@@ -496,15 +494,14 @@
               v_x = 0;
               end_game= true;
               position_text_user = [-5,-11,8];
-              if (count[0]==5) {
+              if (count[1]==5) {
                 text_user("txt_init",scene,'¡¡Has Ganado!! Pulsa Enter para volver a jugar',position_text_user);
               }else {
                 text_user("txt_init",scene,'Has Perdido. Pulsa Enter para jugar de nuevo',position_text_user);
               }
             }
 
-         }else {
-           saque = false;
+
          }
       }
    }
@@ -520,6 +517,7 @@
      }
      if (name == "goal_music") {
        mediaElement.play();
+       mediaElement.volume= 0.4;
      }
      sound.setMediaElementSource( mediaElement );
    }
