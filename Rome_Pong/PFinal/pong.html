@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Pong</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/103/three.min.js"></script>
+
+<script>
+
+   var stepX = 0.10;
+   var stepY = 0.15;
+
+   var v_x = 0.05;
+   var start = false;
+   var colision_top = true;
+   var colision_down = false;
+
+   var combo;
+   var saque;
+   var teams = ["Roma","Cartago"];
+   var texture_user = ("rome.jpg");
+   var size_text = 1.5;
+   var team_ok = false;
+
+   var camera_down = false;
+   var position_text = [-8.3,2,6.2];
+
+   var end_game = false;
+
+
+   function init() {
+      const canvas = document.querySelector('#c');
+      var scene = new THREE.Scene();
+      //Anchura de la escena
+      var sceneWidth = window.innerWidth - 20;
+      //Altura del escenario
+      var sceneHeight = window.innerHeight - 20;
+      //Perspectiva de la cámara.(Ángulo en grados de la cámara,relación de aspecto, Corte cercano, Corte lejano)
+      var camera = new THREE.PerspectiveCamera(90, sceneWidth / sceneHeight, 0.01, 100);
+      //Posición de la cámara
+      camera.position.set(0, -17, 6);
+      camera.lookAt(scene.position);
+      //Suavizado de bordes activado
+      var renderer = new THREE.WebGLRenderer({
+         antialias : true,
+      });
+      //Habilitamos la sombra en el renderer
+      renderer.shadowMap.enabled = true;
+      renderer.setSize(sceneWidth, sceneHeight);
+      document.body.appendChild(renderer.domElement);
+      background(scene);
+      count_cpu = 0;
+      count_user = 0;
+      text("txt_mesh", scene,teams[1] + ' ' + count_cpu +'-'+ count_user+' '+ teams[0]);
+      count = [count_cpu,count_user];
+
+      renderer.render(scene, camera);
+      var light = getLight(0,-1,0);
+      var ambient_light = getAmbient_Light();
+      //getBorder(lugar,ancho_x,profundidad_y,altura_z,donde empezamos a contar_X,Y y Z)
+      var leftBorder = getBorder("left", 1, 24, 2, -6.5, 0, 0,texture_user);
+      var rightBorder = getBorder("right", 1, 24, 2, 6.5, 0, 0,texture_user);
+      var topBorder = getBorder("top_border", 14, 1, 2, 0, 12, 0,texture_user);
+      var downBorder = getBorder("down_border", 14, 1, 2, 0, -12, 0,texture_user);
+
+      var cpuBorder = getBorder("top", 2, 2, 2, 0, 10, 1,texture_user);
+      var userBorder = getBorder("down", 2, 2, 2, 0, -10, 1,"rome.jpg");
+
+      var sphere = getSphere();
+      var sphere_border1 = getSphere_Border(-6,12);
+      var sphere_border2 = getSphere_Border(6,-12);
+      var sphere_border3 = getSphere_Border(-6,-12);
+      var sphere_border4 = getSphere_Border(6,12);
+      var floor = getFloor();
+
+      var floor_oval = Oval_Scenario();
+      var lateral_derecho = getGrada(12,0,0,-1,15,38);
+      var lateral_izquierdo = getGrada(-12,0,0,1,15,38);
+      var fondo_norte = getGrada(0,15,1,0,32,15);
+
+      var border_fondo = getBorder("fondo_up",37,1,13,0,20,0,texture_user)
+      var border_lateral_right = getBorder("border_lateral_right",1,42,13,17,0,0,texture_user);
+      var border_lateral_left = getBorder("border_lateral_left",1,42,13,-17,0,0,texture_user);
+
+      var init_border = getBorder("init",12,0.1,8,0,-12.5,4,"Intro/intro.jpg");
+
+      //Añadimos los elementos al escenario
+      scene.add(light);
+      scene.add(ambient_light);
+      scene.add(leftBorder);
+      scene.add(rightBorder);
+      scene.add(topBorder);
+      scene.add(downBorder);
+
+      scene.add(cpuBorder);
+      scene.add(userBorder);
+
+      scene.add(sphere);
+      scene.add(sphere_border1);
+      scene.add(sphere_border2);
+      scene.add(sphere_border3);
+      scene.add(sphere_border4);
+      scene.add(floor);
+
+      scene.add(floor_oval);
+
+      scene.add(lateral_derecho);
+      scene.add(fondo_norte);
+      scene.add(lateral_izquierdo);
+
+      scene.add(border_fondo)
+      scene.add(border_lateral_right);
+      scene.add(border_lateral_left);
+
+      scene.add(init_border);
+      var borders = [ leftBorder, rightBorder, cpuBorder, userBorder,init_border];
+      animate(sphere, borders, renderer, scene, camera,count,light);
+    }
+
+   function animate(sphere, borders, renderer, scene, camera,count,light) {
+     if (start) {
+       checkCollision(sphere, borders, count, scene);
+       movement_ball(sphere);
+       if (team_ok) {
+         light.position.set(-6,-6,6);
+       }
+     }
+      movement_borders(borders,sphere,scene,camera,renderer,count,light);
+      renderer.render(scene, camera);
+        requestAnimationFrame(function() {
+           animate(sphere, borders, renderer, scene, camera,count,light);
+        }); }
+
+   function movement_ball(sphere) {
+     if (saque) {
+       step_Y = stepY/3;
+       step_X = stepX/3;
+     }else {
+       step_Y = stepY;
+       step_X = stepX;
+     }
+
+
+
+
+
+
+     if (sphere.position.x > 5.5) {
+       sphere.position.x = 5;
+     }else if (sphere.position.x < -5.5) {
+       sphere.position.x = -5;
+     }
+     sphere.position.x += step_X;
+     sphere.position.y += step_Y;
+
+     sphere.rotation.x += step_X;
+     sphere.rotation.y += step_Y;
+   }
+   function movement_CPU(borders,sphere) {
+     if (borders[2].position.x < sphere.position.x) {
+        borders[2].position.x += v_x;
+     }else if (borders[2].position.x > sphere.position.x) {
+         borders[2].position.x += -v_x;
+     }
+   }
+   function movement_borders(borders,sphere,scene,camera,renderer,count,light) {
+     if (start) {
+       movement_CPU(borders,sphere);
+     }
+     var txt_init;
+     document.onkeydown = function (ev){
+       switch (ev.key) {
+         case 'ArrowLeft':
+          if (borders[3].position.x > -5) {
+             borders[3].position.x += -0.3;
+         }
+          break;
+        case 'ArrowRight':
+          if (borders[3].position.x < 5) {
+          borders[3].position.x += +0.3;
+        }
+          break;
+        case 'Enter':
+          if (!start) {
+            music("soundtruck",'sounds/soundtruck.mp3');
+            start = true;
+            scene.remove(borders[4]);
+            position_text_user = [-3,-11,8];
+            text_user("txt_init",scene,'',position_text_user);
+            team_ok = true;
+            }
+          if (end_game) {
+              team_ok = false;
+              start = false;
+              saque = true;
+              colision_top = true;
+              colision_down = false;
+              camera_down = false;
+              count[0] = 0;
+              count[1] = 0;
+              stepX = 0.10;
+              stepY = 0.15;
+              v_x = 0.05;
+              light.position.set(0,-1,0);
+              scene.add(borders[4]);
+              end_game = false;
+              animate(sphere, borders, renderer, scene, camera,count,light);
+          }
+
+          break;
+        case '1':
+          select_team(scene,borders,"Roma","rome.jpg",txt_init);
+          v_x = 0.05;
+          break;
+        case '2':
+          select_team(scene,borders,"Hispania","hispania.jpg",txt_init);
+          v_x = 0.08;
+          break;
+        case '3':
+          select_team(scene,borders,"Egipto","egipto.jpg",txt_init);
+          v_x = 0.1;
+        break;
+        case '4':
+          select_team(scene,borders,"Lusitanos","lusitanos.jpg",txt_init);
+          v_x = 0.12;
+          break;
+        case '5':
+          select_team(scene,borders,"Icenos","icenos.jpg",txt_init);
+          v_x = 0.14;
+          break;
+        case ' ':
+          if (camera_down) { //Cámara de abajo
+            if (team_ok) {
+              camera.position.set(0, -15, 5);
+              size_text = 1.5;
+              camera.lookAt(scene.position);
+              background(scene);
+              renderer.render(scene, camera);
+              position_text = [-8.5,3.5,6.2];
+              text("txt_mesh",scene,teams[1]+' ' + count[0] +'-'+ count[1]+' ' +teams[0]);
+              camera_down = false;
+            }else {
+              camera.position.set(0, -17, 6);
+              camera.lookAt(scene.position);
+              renderer.render(scene, camera);
+              size_text = 1.5;
+              camera_down = false;
+            }
+          }else {
+              camera.position.set(0, -15, 15);
+              camera.lookAt(scene.position);
+              size_text = 2;
+              camera_down = true;
+              background(scene);
+              renderer.render(scene, camera);
+              position_text = [-11,10,9.5];
+              text("txt_mesh",scene,teams[1]+' ' + count[0] +'-'+ count[1]+' ' +teams[0]);
+            }
+          break;
+       default:
+
+       }
+     }
+   }
+   function select_team(scene,borders,team,texture,txt_init){
+     if (!team_ok) {
+       teams[0] = team;
+       text("txt_mesh",scene,teams[1]+' ' + count[0] +'-'+ count[1]+' ' +teams[0]);
+       scene.remove(borders[3]);
+       borders[3] = getBorder("down", 2, 2, 2, 0, -10, 1,texture);
+       scene.add(borders[3]);
+       position_text_user = [-3,-11,8];
+       text_user("txt_init",scene,'Has elegido a ' + teams[0],position_text_user);
+     }
+   }
+
+   function getLight(x,y,z) {
+      var light = new THREE.DirectionalLight(0xffffff, 1);
+      light.position.set(x, y, z);
+      light.castShadow = true;
+      light.shadow.camera.near = 0;
+      light.shadow.camera.far = 16;
+      light.shadow.camera.left = -8;
+      light.shadow.camera.right = 5;
+      light.shadow.camera.top = 10;
+      light.shadow.camera.bottom = -10;
+      light.shadow.mapSize.width = 4096;
+      light.shadow.mapSize.height = 4096;
+      return light;
+   }
+   function getAmbient_Light() {
+     var ambient_light = new THREE.AmbientLight(0X404040,1);
+     return ambient_light;
+   }
+
+   function getSphere() {
+      var geometry = new THREE.SphereGeometry(1, 20, 20);
+      //var material = new THREE.MeshNormalMaterial();
+      //var mesh = new THREE.Mesh(geometry, material);
+      var mesh = new THREE.Mesh(geometry, getMaterial("metal.jpg",1,1));
+      mesh.position.z = 1;
+      mesh.rotation.x = 1;
+      mesh.castShadow = true;
+      mesh.name = "sphere";
+
+      return mesh;
+   }
+   function getSphere_Border(x,y) {
+      var geometry = new THREE.SphereGeometry(0.8, 20, 20);
+      //var material = new THREE.MeshNormalMaterial();
+      //var mesh = new THREE.Mesh(geometry, material);
+      var mesh = new THREE.Mesh(geometry, getMaterial("wood.png",4,4));
+      mesh.position.z = 1.8;
+      mesh.position.y = y;
+      mesh.position.x = x;
+      mesh.castShadow = true;
+      mesh.name = "sphere";
+
+      return mesh;
+   }
+   function Oval_Scenario() {
+     var geometry = new THREE.PlaneGeometry(25, 30);
+     var mesh = new THREE.Mesh(geometry, getMaterial("arena.jpg",25,25));
+     mesh.receiveShadow = true;
+     mesh.position.z = -0.1;
+     return mesh;
+   }
+   function getGrada(x,y,rot_x,rot_y,tam_x,tam_y) {
+     var geometry = new THREE.PlaneGeometry(tam_x,tam_y);
+     if (tam_x>tam_y) {
+       var mesh = new THREE.Mesh(geometry, getMaterial("sillar_piedra_fondo.jpg",20,10));
+     }else {
+       var mesh = new THREE.Mesh(geometry, getMaterial("sillar_piedra.jpg",10,20));
+     }
+     mesh.position.x = x;
+     mesh.position.y = y;
+     mesh.rotation.x = rot_x;
+     mesh.rotation.y = rot_y;
+     mesh.receiveShadow = true;
+     return mesh;
+   }
+
+   function getFloor() {
+      var geometry = new THREE.PlaneGeometry(14, 24);
+      var mesh = new THREE.Mesh(geometry, getMaterial("marmol.jpg",1,1));
+      mesh.receiveShadow = true;
+
+      return mesh;
+   }
+   function getBorder(name, x, y, z, posX, posY, posZ,texture) {
+      var geometry = new THREE.BoxGeometry(x, y, z);
+      if (name == "top") {
+        var mesh = new THREE.Mesh(geometry, getMaterial("carthago.png",1,1));
+      }else if (name == "down" || name == "init") {
+          var mesh = new THREE.Mesh(geometry, getMaterial(texture,1,1));
+          if (name == "init") {
+            mesh.rotation.x = 2.8;
+          }
+      }else if (name == "down_border") {
+        var mesh = new THREE.Mesh(geometry, getMaterial("col.jpg",1,24));
+      }else {
+        var mesh = new THREE.Mesh(geometry, getMaterial("col.jpg",1,3));
+      }
+      mesh.receiveShadow = true;
+      mesh.position.set(posX, posY, posZ);
+      mesh.name = name;
+
+      return mesh;
+   }
+   function getMaterial(name,rows,column) {
+     var texture = new THREE.TextureLoader().load(name);
+     var material = new THREE.MeshPhysicalMaterial({
+        map : texture
+     });
+     material.map.wrapS = material.map.wrapT = THREE.RepeatWrapping;
+     material.map.repeat.set(column, rows);
+     material.side = THREE.DoubleSide;
+
+     return material;
+   }
+   function background(scene) {
+       const fondo = new THREE.TextureLoader();
+       const bgTexture = fondo.load('cielo.jpg');
+       scene.background = bgTexture;
+   }
+   function text(name, scene, txt) {
+     var loader = new THREE.FontLoader();
+     loader.load('helvetiker_regular.typeface.json', function (font) {
+       var selectedObject = scene.getObjectByName(name);
+       if (selectedObject) {
+         scene.remove(selectedObject);
+       }
+       var textGeometry = new THREE.TextGeometry(txt,{
+        font: font,
+        size: size_text,
+        height: 0.1,
+        curveSegments: 12,
+        bevelEnabled: false,
+        bevelThickness: 0.1,
+        bevelSize: 0.1,
+        bevelOffset: 0,
+        bevelSegments: 1,
+      } );
+     var txt_mat = new THREE.MeshBasicMaterial({color:0xFFA000});
+     var txt_mesh = new THREE.Mesh(textGeometry, txt_mat);
+     txt_mesh.name = name;
+     txt_mesh.position.set(position_text[0],position_text[1],position_text[2]);
+     txt_mesh.rotation.x = -5;
+     scene.add(txt_mesh);
+   });}
+   function text_user(name, scene, txt,position) {
+     var loader = new THREE.FontLoader();
+     loader.load('helvetiker_regular.typeface.json', function (font) {
+       var selectedObject = scene.getObjectByName(name);
+       if (selectedObject) {
+         scene.remove(selectedObject);
+       }
+       var textGeometry = new THREE.TextGeometry(txt,{
+        font: font,
+        size: 0.5,
+        height: 0.01,
+        curveSegments: 12,
+        bevelEnabled: false,
+        bevelThickness: 0.1,
+        bevelSize: 0.1,
+        bevelOffset: 0,
+        bevelSegments: 1,
+      } );
+     var txt_mat = new THREE.MeshBasicMaterial({color:0xFFA000});
+     var txt_mesh = new THREE.Mesh(textGeometry, txt_mat);
+     txt_mesh.name = name;
+     txt_mesh.position.set(position[0],position[1],position[2]);
+     txt_mesh.rotation.x = -5;
+     scene.add(txt_mesh);
+   });}
+   function checkCollision(sphere, borders, count,scene) {
+      var originPosition = sphere.position.clone();
+
+      for (var i = 0; i < sphere.geometry.vertices.length; i++) {
+         var localVertex = sphere.geometry.vertices[i].clone();
+         var globalVertex = localVertex.applyMatrix4(sphere.matrix);
+         var directionVector = globalVertex.sub(sphere.position);
+         var ray = new THREE.Raycaster(originPosition, directionVector.clone().normalize());
+         var collisionResults = ray.intersectObjects(borders);
+         if (collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()) {
+            // Collision detected
+            if (collisionResults[0].object.name == "left" || collisionResults[0].object.name == "right") {
+              stepX *= -1;
+            }
+            if (collisionResults[0].object.name == "down" || collisionResults[0].object.name == "top") {
+                if (collisionResults[0].object.name == "down" && colision_down) {
+                  stepY *= -1;
+                }else if (collisionResults[0].object.name == "top" && colision_top) {
+                  stepY *= -1;
+                }
+                saque = false;
+                if (collisionResults[0].object.name == "down") {
+                    colision_down = false;
+                    colision_top = true;
+                }else {
+                  colision_top = false;
+                  colision_down = true;
+                }
+                distance_sphere_user = (((sphere.position.x - borders[3].position.x)**2)+(sphere.position.y - borders[3].position.y)**2)**(1/2);
+                distance_sphere_cpu = (((sphere.position.x - borders[2].position.x)**2)+(sphere.position.y - borders[2].position.y)**2)**(1/2);
+               if (combo) {
+                 combo = false;
+                 stepX = 0.10;
+               }
+               if ((distance_sphere_user > 2 && distance_sphere_user < 10) || (distance_sphere_cpu > 2 &&  distance_sphere_cpu < 10) && !saque) {
+                 combo = true;
+                 if (distance_sphere_user < distance_sphere_cpu) {
+                   stepX += (distance_sphere_user - 2);
+                 }else {
+                    stepX += (distance_sphere_cpu - 2);
+                 }
+                 if ((distance_sphere_user > 2.3 && distance_sphere_user < 10) || (distance_sphere_cpu > 2.3 &&  distance_sphere_cpu < 10)) {
+                    stepX *= -1;
+                 }
+               }
+            }
+
+            break;
+         }
+
+         if (sphere.position.y < -10 || sphere.position.y > 10) {
+           saque = true;
+           music("goal_music",'sounds/goal_music.mp3');
+            if (sphere.position.y < -10) {
+              count[0] += 1;
+            }else {
+              count[1]+= 1;
+            }
+            start = false;
+            text("txt_mesh",scene,teams[1]+' ' + count[0] +'-'+ count[1]+' ' +teams[0]);
+            sphere.position.x = 0;
+            sphere.position.y = 0;
+            if (combo) {
+              combo = false;
+              stepX = 0.10;
+            }
+            if (count[0] == 5 ||count[1] == 5) {
+              stepX = 0;
+              stepY = 0;
+              v_x = 0;
+              end_game= true;
+              position_text_user = [-6,-11,8];
+              if (count[1]==5) {
+                text_user("txt_init",scene,'¡¡Has Ganado!! Pulsa Enter para volver a jugar',position_text_user);
+              }else {
+                text_user("txt_init",scene,'Has Perdido. Pulsa Enter para jugar de nuevo',position_text_user);
+              }
+            }
+
+
+         }
+      }
+   }
+   function music(name,ubication) {
+     var listener = new THREE.AudioListener();
+     // create a global audio source
+     var sound = new THREE.Audio( listener );
+     // load a sound and set it as the Audio object's buffer
+     var mediaElement = new Audio(ubication);
+     if (name == "soundtruck" && ((count[0]==0) && (count[1]==0))) {
+       mediaElement.loop = true;
+       mediaElement.play();
+     }
+     if (name == "goal_music") {
+       mediaElement.play();
+       mediaElement.volume= 0.4;
+     }
+     sound.setMediaElementSource( mediaElement );
+   }
+
+</script>
+</head>
+
+<body onload="init()">
+</body>
+
+</html>

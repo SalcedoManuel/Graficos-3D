@@ -1,3 +1,11 @@
+<!--
+Partes implementadas:
+
+- Funcionalidad básica
+- Funcionalidad avanzada (ángulo de rebote variable y  posibilidad de ganar a la CPU)
+- Mejoras (cambio de posición de cámara durante la partida, cambiar texturas de tu pala, música durante la partida...)
+-->
+
 <!DOCTYPE html>
 <html>
 
@@ -6,25 +14,33 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/103/three.min.js"></script>
 
 <script>
-
+  //Velocidad de la bola en los ejes.
    var stepX = 0.10;
    var stepY = 0.15;
-
+  //Velocidad de la pala rival
    var v_x = 0.05;
+  //Variable que marca el comienzo de la partida
    var start = false;
+  //Variables creadas para evitar bugs en la colisión
    var colision_top = true;
    var colision_down = false;
-
+  //Variable que marca los golpes especiales
    var combo;
+   //Variable que marca cuando hay que sacar porque ha ocurrido un gol
    var saque;
+   //Equipos que van a jugar, el [0] es el usuario y el [1] la CPU
    var teams = ["Roma","Cartago"];
-   var texture_user = ("rome.jpg");
+   //textura del jugador, por defecto será esta.
+   var texture_user = ("users_textures/rome.jpg");
+   //tamaño del texto del marcador.
    var size_text = 1.5;
+   //Variable que marca si el usuario a elegido equipo.
    var team_ok = false;
-
+   //Variable booleana que marca la posición de la cámara
    var camera_down = false;
+   //Posición del texto
    var position_text = [-8.3,2,6.2];
-
+   //Variable que marca el final del juego
    var end_game = false;
 
 
@@ -48,41 +64,44 @@
       renderer.shadowMap.enabled = true;
       renderer.setSize(sceneWidth, sceneHeight);
       document.body.appendChild(renderer.domElement);
+      //Función que elige el fondo del juego
       background(scene);
-      count_cpu = 0;
-      count_user = 0;
-      text("txt_mesh", scene,teams[1] + ' ' + count_cpu +'-'+ count_user+' '+ teams[0]);
-      count = [count_cpu,count_user];
+      //Ponemos el marcador
+      text("txt_mesh", scene,teams[1] + ' ' + 0 +'-'+ 0 +' '+ teams[0]);
+      count = [0,0];
 
       renderer.render(scene, camera);
+      //Ponemos la lugar en la posición que queremos
       var light = getLight(0,-1,0);
       var ambient_light = getAmbient_Light();
       //getBorder(lugar,ancho_x,profundidad_y,altura_z,donde empezamos a contar_X,Y y Z)
-      var leftBorder = getBorder("left", 1, 24, 2, -6.5, 0, 0,texture_user);
-      var rightBorder = getBorder("right", 1, 24, 2, 6.5, 0, 0,texture_user);
-      var topBorder = getBorder("top_border", 14, 1, 2, 0, 12, 0,texture_user);
-      var downBorder = getBorder("down_border", 14, 1, 2, 0, -12, 0,texture_user);
-
-      var cpuBorder = getBorder("top", 2, 2, 2, 0, 10, 1,texture_user);
-      var userBorder = getBorder("down", 2, 2, 2, 0, -10, 1,"rome.jpg");
+      var leftBorder = getBorder("left", 1, 24, 2, -6.5, 0, 0);
+      var rightBorder = getBorder("right", 1, 24, 2, 6.5, 0, 0);
+      var topBorder = getBorder("top_border", 14, 1, 2, 0, 12, 0);
+      var downBorder = getBorder("down_border", 14, 1, 2, 0, -12, 0);
+      //Creamos a los jugadores
+      var cpuBorder = getBorder("top", 2, 2, 2, 0, 10, 1);
+      var userBorder = getBorder("down", 2, 2, 2, 0, -10, 1);
 
       var sphere = getSphere();
+      //Estas bolas son de decoración, no afectan a la hora de jugar
       var sphere_border1 = getSphere_Border(-6,12);
       var sphere_border2 = getSphere_Border(6,-12);
       var sphere_border3 = getSphere_Border(-6,-12);
       var sphere_border4 = getSphere_Border(6,12);
+      //Añadimos el suelo
       var floor = getFloor();
-
+      //decoración del exterior.
       var floor_oval = Oval_Scenario();
       var lateral_derecho = getGrada(12,0,0,-1,15,38);
       var lateral_izquierdo = getGrada(-12,0,0,1,15,38);
       var fondo_norte = getGrada(0,15,1,0,32,15);
 
-      var border_fondo = getBorder("fondo_up",37,1,13,0,20,0,texture_user)
-      var border_lateral_right = getBorder("border_lateral_right",1,42,13,17,0,0,texture_user);
-      var border_lateral_left = getBorder("border_lateral_left",1,42,13,-17,0,0,texture_user);
+      var border_fondo = getBorder("fondo_up",37,1,13,0,20,0)
+      var border_lateral_right = getBorder("border_lateral_right",1,42,13,17,0,0);
+      var border_lateral_left = getBorder("border_lateral_left",1,42,13,-17,0,0);
 
-      var init_border = getBorder("init",12,0.1,8,0,-12.5,4,"Intro/intro.jpg");
+      var init_border = getBorder("init",12,0.1,8,0,-12.5,4);
 
       //Añadimos los elementos al escenario
       scene.add(light);
@@ -116,12 +135,12 @@
       var borders = [ leftBorder, rightBorder, cpuBorder, userBorder,init_border];
       animate(sphere, borders, renderer, scene, camera,count,light);
     }
-
+  //Función que marca la animación del juego
    function animate(sphere, borders, renderer, scene, camera,count,light) {
-     if (start) {
+     if (start) { //Si no se pulsa Enter no se empieza
        checkCollision(sphere, borders, count, scene);
        movement_ball(sphere);
-       if (team_ok) {
+       if (team_ok) { //En cuanto se elija equipo se cambia la posición de la luz
          light.position.set(-6,-6,6);
        }
      }
@@ -130,21 +149,27 @@
         requestAnimationFrame(function() {
            animate(sphere, borders, renderer, scene, camera,count,light);
         }); }
-
+  //Movimiento de la bola
    function movement_ball(sphere) {
-     if (saque) {
-       step_Y = stepY/4;
-       console.log(saque);
+     if (saque) { //Aplicamos una reducción de velocidad en el saque
+       step_Y = stepY/3;
+       step_X = stepX/3;
      }else {
        step_Y = stepY;
+       step_X = stepX;
+     }
+     if (sphere.position.x > 5.5) { //Esto sirve para controlar y asegurarse que la bola no se bloquea en el lateral (a veces pasa)
+       sphere.position.x = 5;
+     }else if (sphere.position.x < -5.5) {
+       sphere.position.x = -5;
      }
 
-     sphere.position.x += stepX;
+     sphere.position.x += step_X;
      sphere.position.y += step_Y;
-
-     sphere.rotation.x += stepX;
+     sphere.rotation.x += step_X;
      sphere.rotation.y += step_Y;
    }
+  //Movimiento de la CPU
    function movement_CPU(borders,sphere) {
      if (borders[2].position.x < sphere.position.x) {
         borders[2].position.x += v_x;
@@ -152,11 +177,12 @@
          borders[2].position.x += -v_x;
      }
    }
+  //Movimiento de los jugadores.
    function movement_borders(borders,sphere,scene,camera,renderer,count,light) {
-     if (start) {
+     if (start) { //La CPU solo se mueve si el usuario empieza a jugar
        movement_CPU(borders,sphere);
      }
-     var txt_init;
+     var txt_init;  //Variable que muestra el equipo seleccionado
      document.onkeydown = function (ev){
        switch (ev.key) {
          case 'ArrowLeft':
@@ -173,12 +199,12 @@
           if (!start) {
             music("soundtruck",'sounds/soundtruck.mp3');
             start = true;
-            scene.remove(borders[4]);
+            scene.remove(borders[4]); //Eliminamos diapositiva inicial
             position_text_user = [-3,-11,8];
-            text_user("txt_init",scene,'',position_text_user);
+            text_user("txt_init",scene,'',position_text_user); //Eliminamos texto
             team_ok = true;
             }
-          if (end_game) {
+          if (end_game) { //Reseteamos todo.
               team_ok = false;
               start = false;
               saque = true;
@@ -198,23 +224,23 @@
 
           break;
         case '1':
-          select_team(scene,borders,"Roma","rome.jpg",txt_init);
+          select_team(scene,borders,"Roma","users_textures/rome.jpg",txt_init);//Roma NIVEL: FÁCIL
           v_x = 0.05;
           break;
         case '2':
-          select_team(scene,borders,"Hispania","hispania.jpg",txt_init);
+          select_team(scene,borders,"Hispania","users_textures/hispania.jpg",txt_init); //Hispania: NIVEL BAJO-MEDIO
           v_x = 0.08;
           break;
         case '3':
-          select_team(scene,borders,"Egipto","egipto.jpg",txt_init);
+          select_team(scene,borders,"Egipto","users_textures/egipto.jpg",txt_init); //Egipto NIVEL MEDIO
           v_x = 0.1;
         break;
         case '4':
-          select_team(scene,borders,"Lusitanos","lusitanos.jpg",txt_init);
+          select_team(scene,borders,"Lusitanos","users_textures/lusitanos.jpg",txt_init); //Lusitanos NIVEL ALTO
           v_x = 0.12;
           break;
         case '5':
-          select_team(scene,borders,"Icenos","icenos.jpg",txt_init);
+          select_team(scene,borders,"Icenos","users_textures/icenos.jpg",txt_init); // ICENOS NIVEL MUY DÍFICIL
           v_x = 0.14;
           break;
         case ' ':
@@ -228,14 +254,14 @@
               position_text = [-8.5,3.5,6.2];
               text("txt_mesh",scene,teams[1]+' ' + count[0] +'-'+ count[1]+' ' +teams[0]);
               camera_down = false;
-            }else {
+            }else {//Cámar de abajo especial para cuando se esté iniciando el juego
               camera.position.set(0, -17, 6);
               camera.lookAt(scene.position);
               renderer.render(scene, camera);
               size_text = 1.5;
               camera_down = false;
             }
-          }else {
+          }else { //Cámara en la posición alta
               camera.position.set(0, -15, 15);
               camera.lookAt(scene.position);
               size_text = 2;
@@ -251,18 +277,20 @@
        }
      }
    }
+  //Seleccionar equipo con el que jugar.
    function select_team(scene,borders,team,texture,txt_init){
      if (!team_ok) {
        teams[0] = team;
-       text("txt_mesh",scene,teams[1]+' ' + count[0] +'-'+ count[1]+' ' +teams[0]);
+       text("txt_mesh",scene,teams[1]+' ' + count[0] +'-'+ count[1]+' ' +teams[0]); //Marcador
        scene.remove(borders[3]);
-       borders[3] = getBorder("down", 2, 2, 2, 0, -10, 1,texture);
-       scene.add(borders[3]);
+       texture_user = texture;
+       borders[3] = getBorder("down", 2, 2, 2, 0, -10, 1);
+       scene.add(borders[3]);//Cambia la textura para el nuevo jugador.
        position_text_user = [-3,-11,8];
-       text_user("txt_init",scene,'Has elegido a ' + teams[0],position_text_user);
+       text_user("txt_init",scene,'Has elegido a ' + teams[0],position_text_user); //Muestra el equipo que está seleccionado
      }
    }
-
+  //Función que añade la luz
    function getLight(x,y,z) {
       var light = new THREE.DirectionalLight(0xffffff, 1);
       light.position.set(x, y, z);
@@ -277,16 +305,17 @@
       light.shadow.mapSize.height = 4096;
       return light;
    }
+  //Función que añade la luz ambiental
    function getAmbient_Light() {
      var ambient_light = new THREE.AmbientLight(0X404040,1);
      return ambient_light;
    }
-
+  //Obtener la esfera.
    function getSphere() {
       var geometry = new THREE.SphereGeometry(1, 20, 20);
       //var material = new THREE.MeshNormalMaterial();
       //var mesh = new THREE.Mesh(geometry, material);
-      var mesh = new THREE.Mesh(geometry, getMaterial("metal.jpg",1,1));
+      var mesh = new THREE.Mesh(geometry, getMaterial("textures/metal.jpg",1,1));
       mesh.position.z = 1;
       mesh.rotation.x = 1;
       mesh.castShadow = true;
@@ -294,11 +323,12 @@
 
       return mesh;
    }
+  //Crea las bolas de decoración
    function getSphere_Border(x,y) {
       var geometry = new THREE.SphereGeometry(0.8, 20, 20);
       //var material = new THREE.MeshNormalMaterial();
       //var mesh = new THREE.Mesh(geometry, material);
-      var mesh = new THREE.Mesh(geometry, getMaterial("wood.png",4,4));
+      var mesh = new THREE.Mesh(geometry, getMaterial("textures/wood.png",4,4));
       mesh.position.z = 1.8;
       mesh.position.y = y;
       mesh.position.x = x;
@@ -307,19 +337,21 @@
 
       return mesh;
    }
+  //Crea la zona de alrededor del campo de juego
    function Oval_Scenario() {
      var geometry = new THREE.PlaneGeometry(25, 30);
-     var mesh = new THREE.Mesh(geometry, getMaterial("arena.jpg",25,25));
+     var mesh = new THREE.Mesh(geometry, getMaterial("textures/arena.jpg",25,25));
      mesh.receiveShadow = true;
      mesh.position.z = -0.1;
      return mesh;
    }
+   //Crea las gradas
    function getGrada(x,y,rot_x,rot_y,tam_x,tam_y) {
      var geometry = new THREE.PlaneGeometry(tam_x,tam_y);
      if (tam_x>tam_y) {
-       var mesh = new THREE.Mesh(geometry, getMaterial("sillar_piedra_fondo.jpg",20,10));
+       var mesh = new THREE.Mesh(geometry, getMaterial("textures/sillar_piedra_fondo.jpg",20,10));
      }else {
-       var mesh = new THREE.Mesh(geometry, getMaterial("sillar_piedra.jpg",10,20));
+       var mesh = new THREE.Mesh(geometry, getMaterial("textures/sillar_piedra.jpg",10,20));
      }
      mesh.position.x = x;
      mesh.position.y = y;
@@ -328,27 +360,26 @@
      mesh.receiveShadow = true;
      return mesh;
    }
-
+   //Añade el suelo
    function getFloor() {
       var geometry = new THREE.PlaneGeometry(14, 24);
-      var mesh = new THREE.Mesh(geometry, getMaterial("marmol.jpg",1,1));
+      var mesh = new THREE.Mesh(geometry, getMaterial("textures/marmol.jpg",1,1));
       mesh.receiveShadow = true;
 
       return mesh;
    }
-   function getBorder(name, x, y, z, posX, posY, posZ,texture) {
+  //Añade cualquier tipo de borde
+   function getBorder(name, x, y, z, posX, posY, posZ) {
       var geometry = new THREE.BoxGeometry(x, y, z);
       if (name == "top") {
-        var mesh = new THREE.Mesh(geometry, getMaterial("carthago.png",1,1));
-      }else if (name == "down" || name == "init") {
-          var mesh = new THREE.Mesh(geometry, getMaterial(texture,1,1));
-          if (name == "init") {
-            mesh.rotation.x = 2.8;
-          }
-      }else if (name == "down_border") {
-        var mesh = new THREE.Mesh(geometry, getMaterial("col.jpg",1,24));
+        var mesh = new THREE.Mesh(geometry, getMaterial("users_textures/carthago.png",1,1));
+      }else if (name == "down"){
+        var mesh = new THREE.Mesh(geometry, getMaterial(texture_user,1,1));
+      }else if (name == "init") {
+        var mesh = new THREE.Mesh(geometry, getMaterial("Intro/intro.jpg",1,1));
+        mesh.rotation.x = 2.8;
       }else {
-        var mesh = new THREE.Mesh(geometry, getMaterial("col.jpg",1,3));
+        var mesh = new THREE.Mesh(geometry, getMaterial("textures/col.jpg",1,20));
       }
       mesh.receiveShadow = true;
       mesh.position.set(posX, posY, posZ);
@@ -356,6 +387,7 @@
 
       return mesh;
    }
+  //Añade la textura de cualquier material elegido al objeto
    function getMaterial(name,rows,column) {
      var texture = new THREE.TextureLoader().load(name);
      var material = new THREE.MeshPhysicalMaterial({
@@ -367,11 +399,13 @@
 
      return material;
    }
+  //Añade el fondo
    function background(scene) {
        const fondo = new THREE.TextureLoader();
-       const bgTexture = fondo.load('cielo.jpg');
+       const bgTexture = fondo.load('textures/cielo.jpg');
        scene.background = bgTexture;
    }
+  //Añade unicamente el marcador de juego
    function text(name, scene, txt) {
      var loader = new THREE.FontLoader();
      loader.load('helvetiker_regular.typeface.json', function (font) {
@@ -397,6 +431,7 @@
      txt_mesh.rotation.x = -5;
      scene.add(txt_mesh);
    });}
+  //Añade cualquier tipo de otro texto.
    function text_user(name, scene, txt,position) {
      var loader = new THREE.FontLoader();
      loader.load('helvetiker_regular.typeface.json', function (font) {
@@ -407,7 +442,7 @@
        var textGeometry = new THREE.TextGeometry(txt,{
         font: font,
         size: 0.5,
-        height: 0.1,
+        height: 0.01,
         curveSegments: 12,
         bevelEnabled: false,
         bevelThickness: 0.1,
@@ -416,12 +451,13 @@
         bevelSegments: 1,
       } );
      var txt_mat = new THREE.MeshBasicMaterial({color:0xFFA000});
-     var txt_mesh = new THREE.Mesh(textGeometry, txt_mat);
-     txt_mesh.name = name;
-     txt_mesh.position.set(position[0],position[1],position[2]);
-     txt_mesh.rotation.x = -5;
-     scene.add(txt_mesh);
+     var text_mesh = new THREE.Mesh(textGeometry, txt_mat);
+     text_mesh.name = name;
+     text_mesh.position.set(position[0],position[1],position[2]);
+     text_mesh.rotation.x = -5;
+     scene.add(text_mesh);
    });}
+  //Función que controla las colisiones de la bola con las palas
    function checkCollision(sphere, borders, count,scene) {
       var originPosition = sphere.position.clone();
 
@@ -442,20 +478,24 @@
                 }else if (collisionResults[0].object.name == "top" && colision_top) {
                   stepY *= -1;
                 }
-                saque = false;
-                if (collisionResults[0].object.name == "down") {
+                saque = false;//Si toca con las palas o laterales no hay gol
+                if (collisionResults[0].object.name == "down") {  //Sirve para evitar que se quede rebotando en las palas
                     colision_down = false;
                     colision_top = true;
                 }else {
                   colision_top = false;
                   colision_down = true;
                 }
+                //Calculamos la distancia para saber si rebota en la esquina o no
                 distance_sphere_user = (((sphere.position.x - borders[3].position.x)**2)+(sphere.position.y - borders[3].position.y)**2)**(1/2);
                 distance_sphere_cpu = (((sphere.position.x - borders[2].position.x)**2)+(sphere.position.y - borders[2].position.y)**2)**(1/2);
+                //Si el combo especial está activado, eliminarlo
+                //y recuperar valores predeterminados
                if (combo) {
                  combo = false;
                  stepX = 0.10;
                }
+               //Si entra dentro es que ha rebotado cerca de alguna de las esquinas y se activa el combo
                if ((distance_sphere_user > 2 && distance_sphere_user < 10) || (distance_sphere_cpu > 2 &&  distance_sphere_cpu < 10) && !saque) {
                  combo = true;
                  if (distance_sphere_user < distance_sphere_cpu) {
@@ -471,29 +511,30 @@
 
             break;
          }
-
+         //Si esta condición se cumple es que se ha marcado un gol
          if (sphere.position.y < -10 || sphere.position.y > 10) {
-           saque = true;
-           music("goal_music",'sounds/goal_music.mp3');
+           saque = true; //Se procederá a sacar.
+           music("goal_music",'sounds/goal_music.mp3'); //Música de gol
             if (sphere.position.y < -10) {
               count[0] += 1;
             }else {
               count[1]+= 1;
             }
-            start = false;
+            start = false; //Hay que pulsar a Enter para empezar
             text("txt_mesh",scene,teams[1]+' ' + count[0] +'-'+ count[1]+' ' +teams[0]);
             sphere.position.x = 0;
             sphere.position.y = 0;
-            if (combo) {
+            if (combo) {  //Hay que eliminar el combo si el gol es por eso
               combo = false;
               stepX = 0.10;
             }
-            if (count[0] == 5 ||count[1] == 5) {
+
+            if (count[0] == 5 ||count[1] == 5) {  // Si esta condición se cumple se acabó la partida
               stepX = 0;
               stepY = 0;
               v_x = 0;
               end_game= true;
-              position_text_user = [-5,-11,8];
+              position_text_user = [-6,-11,8];
               if (count[1]==5) {
                 text_user("txt_init",scene,'¡¡Has Ganado!! Pulsa Enter para volver a jugar',position_text_user);
               }else {
@@ -505,16 +546,19 @@
          }
       }
    }
+  //Función que añade la música al juego
    function music(name,ubication) {
      var listener = new THREE.AudioListener();
      // create a global audio source
      var sound = new THREE.Audio( listener );
      // load a sound and set it as the Audio object's buffer
      var mediaElement = new Audio(ubication);
+     //Añade la música de fondo en el 0-0. Se activa el loop para que se repita cuando acabe
      if (name == "soundtruck" && ((count[0]==0) && (count[1]==0))) {
        mediaElement.loop = true;
        mediaElement.play();
      }
+     //Añadir sonido de gol
      if (name == "goal_music") {
        mediaElement.play();
        mediaElement.volume= 0.4;
