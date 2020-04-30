@@ -39,7 +39,7 @@ Partes implementadas:
    //Variable booleana que marca la posición de la cámara
    var camera_down = false;
    //Posición del texto
-   var position_text = [-8.3,2,6.2];
+   var position_text = [-8.5,3.5,6.2];
    //Variable que marca el final del juego
    var end_game = false;
 
@@ -159,9 +159,9 @@ Partes implementadas:
        step_X = stepX;
      }
      if (sphere.position.x > 5.5) { //Esto sirve para controlar y asegurarse que la bola no se bloquea en el lateral (a veces pasa)
-       sphere.position.x = 5;
+       sphere.position.x = 4.9;
      }else if (sphere.position.x < -5.5) {
-       sphere.position.x = -5;
+       sphere.position.x = -4.9;
      }
 
      sphere.position.x += step_X;
@@ -205,12 +205,8 @@ Partes implementadas:
             team_ok = true;
             }
           if (end_game) { //Reseteamos todo.
-              team_ok = false;
-              start = false;
-              saque = true;
-              colision_top = true;
-              colision_down = false;
-              camera_down = false;
+            reset();
+
               count[0] = 0;
               count[1] = 0;
               stepX = 0.10;
@@ -251,15 +247,18 @@ Partes implementadas:
               camera.lookAt(scene.position);
               background(scene);
               renderer.render(scene, camera);
-              position_text = [-8.5,3.5,6.2];
-              text("txt_mesh",scene,teams[1]+' ' + count[0] +'-'+ count[1]+' ' +teams[0]);
-              camera_down = false;
             }else {//Cámar de abajo especial para cuando se esté iniciando el juego
               camera.position.set(0, -17, 6);
               camera.lookAt(scene.position);
               renderer.render(scene, camera);
+            }
+            if (!end_game) {
               size_text = 1.5;
+              position_text = [-8.5,3.5,6.2];
+              text("txt_mesh",scene,teams[1]+' ' + count[0] +'-'+ count[1]+' ' +teams[0]);
               camera_down = false;
+            }else {
+              position_text_user = [-6,-11,8];
             }
           }else { //Cámara en la posición alta
               camera.position.set(0, -15, 15);
@@ -276,6 +275,14 @@ Partes implementadas:
 
        }
      }
+   }
+   function reset() {
+     team_ok = false;
+     start = false;
+     saque = true;
+     colision_top = true;
+     colision_down = false;
+     camera_down = false;
    }
   //Seleccionar equipo con el que jugar.
    function select_team(scene,borders,team,texture,txt_init){
@@ -413,6 +420,8 @@ Partes implementadas:
        if (selectedObject) {
          scene.remove(selectedObject);
        }
+       console.log(size_text);
+       console.log(position_text);
        var textGeometry = new THREE.TextGeometry(txt,{
         font: font,
         size: size_text,
