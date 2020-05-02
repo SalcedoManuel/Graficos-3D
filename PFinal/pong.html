@@ -47,6 +47,8 @@ Partes implementadas:
    var position_text = [-8.5,3.5,6.2];
    //Variable que marca el final del juego
    var end_game = false;
+   //Variable que marca el inicio de la música de fondo
+   var music_init = true;
 
 
    function init() {
@@ -202,7 +204,10 @@ Partes implementadas:
           break;
         case 'Enter':
           if (!start) {
-            music("soundtruck",'sounds/soundtruck.mp3');
+            if (music_init) {
+              music("soundtruck",'sounds/soundtruck.mp3');
+              music_init = false;
+            }
             start = true;
             scene.remove(borders[4]); //Eliminamos diapositiva inicial
             position_text_user = [-3,-11,8];
