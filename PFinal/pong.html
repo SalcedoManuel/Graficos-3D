@@ -45,6 +45,8 @@ Partes implementadas:
    var camera_down = false;
    //Posición del texto
    var position_text = [-11,3.5,6.2];
+   //Posición de los textos complementarios
+   var position_text_user = [-6,-11,8];
    //Variable que marca el final del juego
    var end_game = false;
    //Variable que marca el inicio de la música de fondo
@@ -208,12 +210,12 @@ Partes implementadas:
               music("soundtruck",'sounds/soundtruck.mp3');
               music_init = false;
             }
-            start = true;
-            scene.remove(borders[4]); //Eliminamos diapositiva inicial
-            position_text_user = [-3,-11,8];
-            text_user("txt_init",scene,'',position_text_user); //Eliminamos texto
-
-            team_ok = true;
+            if (!end_game) {
+              start = true;
+              scene.remove(borders[4]); //Eliminamos diapositiva inicial
+              position_text_user = [-6,-11,8];
+              text_user("txt_init",scene,'',position_text_user); //Eliminamos texto
+              team_ok = true;
             }
           if (end_game) { //Reseteamos todo.
 
@@ -233,6 +235,7 @@ Partes implementadas:
               end_game = false;
               animate(sphere, borders, renderer, scene, camera,count,light);
           }
+        }
 
           break;
         case '1':
@@ -553,11 +556,10 @@ Partes implementadas:
               stepY = 0;
               v_x = 0;
               end_game= true;
-              position_text_user = [-6,-11,8];
               if (count[1]==5) {
-                text_user("txt_init",scene,'¡¡Has Ganado!! Pulsa Enter para volver a jugar',position_text_user);
+                text_user("txt_init",scene,'¡¡Has Ganado!! Pulsa Enter para volver a jugar',[-6,-11,8]);
               }else {
-                text_user("txt_init",scene,'Has Perdido. Pulsa Enter para jugar de nuevo',position_text_user);
+                text_user("txt_init",scene,'Has Perdido. Pulsa Enter para jugar de nuevo',[-6,-11,8]);
               }
             }
 
