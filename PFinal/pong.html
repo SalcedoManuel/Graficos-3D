@@ -44,7 +44,7 @@ Partes implementadas:
    //Variable booleana que marca la posición de la cámara
    var camera_down = false;
    //Posición del texto
-   var position_text = [-8.5,3.5,6.2];
+   var position_text = [-11,3.5,6.2];
    //Variable que marca el final del juego
    var end_game = false;
    //Variable que marca el inicio de la música de fondo
@@ -159,7 +159,7 @@ Partes implementadas:
   //Movimiento de la bola
    function movement_ball(sphere) {
      if (saque) { //Aplicamos una reducción de velocidad en el saque
-       step_Y = stepY/3;
+       step_Y = stepY*3;
        step_X = stepX/3;
      }else {
        step_Y = stepY;
@@ -212,11 +212,17 @@ Partes implementadas:
             scene.remove(borders[4]); //Eliminamos diapositiva inicial
             position_text_user = [-3,-11,8];
             text_user("txt_init",scene,'',position_text_user); //Eliminamos texto
+
             team_ok = true;
             }
           if (end_game) { //Reseteamos todo.
-            reset();
 
+              team_ok = false;
+              start = false;
+              saque = true;
+              colision_top = true;
+              colision_down = false;
+              camera_down = false;
               count[0] = 0;
               count[1] = 0;
               stepX = 0.10;
@@ -251,7 +257,7 @@ Partes implementadas:
           break;
         case ' ':
           if (camera_down) { //Cámara de abajo
-            if (team_ok) {
+            if (team_ok && start) {
               camera.position.set(0, -15, 5);
               size_text = 1.5;
               camera.lookAt(scene.position);
@@ -264,10 +270,11 @@ Partes implementadas:
             }
             if (!end_game) {
               size_text = 1.5;
-              position_text = [-8.5,3.5,6.2];
+              position_text = [-11,3.5,6.2];
               text("txt_mesh",scene,teams[1]+' ' + count[0] +'-'+ count[1]+' ' +teams[0]);
               camera_down = false;
             }else {
+              size_text = 1.5;
               position_text_user = [-6,-11,8];
             }
           }else { //Cámara en la posición alta
@@ -285,14 +292,6 @@ Partes implementadas:
 
        }
      }
-   }
-   function reset() {
-     team_ok = false;
-     start = false;
-     saque = true;
-     colision_top = true;
-     colision_down = false;
-     camera_down = false;
    }
   //Seleccionar equipo con el que jugar.
    function select_team(scene,borders,team,texture,txt_init){
@@ -350,6 +349,7 @@ Partes implementadas:
       mesh.position.y = y;
       mesh.position.x = x;
       mesh.castShadow = true;
+      //mesh.receiveShadow = true;
       mesh.name = "sphere";
 
       return mesh;
@@ -390,15 +390,17 @@ Partes implementadas:
       var geometry = new THREE.BoxGeometry(x, y, z);
       if (name == "top") {
         var mesh = new THREE.Mesh(geometry, getMaterial("users_textures/carthago.png",1,1));
+        mesh.castShadow = true;
       }else if (name == "down"){
         var mesh = new THREE.Mesh(geometry, getMaterial(texture_user,1,1));
+        mesh.castShadow = true;
       }else if (name == "init") {
         var mesh = new THREE.Mesh(geometry, getMaterial("intro/intro.jpg",1,1));
         mesh.rotation.x = 2.8;
       }else {
         var mesh = new THREE.Mesh(geometry, getMaterial("textures/col.jpg",1,20));
+          mesh.receiveShadow = true;
       }
-      mesh.receiveShadow = true;
       mesh.position.set(posX, posY, posZ);
       mesh.name = name;
 
@@ -430,11 +432,9 @@ Partes implementadas:
        if (selectedObject) {
          scene.remove(selectedObject);
        }
-       console.log(size_text);
-       console.log(position_text);
        var textGeometry = new THREE.TextGeometry(txt,{
         font: font,
-        size: size_text,
+        size: 2,
         height: 0.1,
         curveSegments: 12,
         bevelEnabled: false,
