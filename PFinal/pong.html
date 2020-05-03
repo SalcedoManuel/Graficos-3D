@@ -21,7 +21,7 @@ Partes implementadas:
 <script>
   //Velocidad de la bola en los ejes.
    var stepX = 0.10;
-   var stepY = 0.15;
+   var stepY = 0.16;
   //Velocidad de la pala rival
    var v_x = 0.05;
   //Variable que marca el comienzo de la partida
@@ -159,7 +159,7 @@ Partes implementadas:
   //Movimiento de la bola
    function movement_ball(sphere) {
      if (saque) { //Aplicamos una reducción de velocidad en el saque
-       step_Y = stepY*3;
+       step_Y = stepY/3;
        step_X = stepX/3;
      }else {
        step_Y = stepY;
@@ -226,7 +226,7 @@ Partes implementadas:
               count[0] = 0;
               count[1] = 0;
               stepX = 0.10;
-              stepY = 0.15;
+              stepY = 0.16;
               v_x = 0.05;
               light.position.set(0,-1,0);
               scene.add(borders[4]);
