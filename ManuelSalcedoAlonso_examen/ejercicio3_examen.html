@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Practica 3</title>
+
+<script id="shaderVs" type="x-shader/x-vertex">
+  attribute vec4 a_Position;
+  attribute float a_Size;
+  void main(){
+    gl_Position = a_Position;
+    gl_PointSize = a_Size;
+  }
+</script>
+<script id="shaderFs" type="x-shader/x-fragment">
+  precision mediump float;
+  uniform vec4 u_FragColor;
+  void main() {
+    gl_FragColor = u_FragColor;
+  }
+</script>
+
+<script>
+  var g_points = [];
+  var g_colors = [];
+  var g_size = [];
+  var n;
+  var xyz = [0,0,0];
+  function init(){
+    var canvas = document.getElementById("myCanvas");
+    var gl = canvas.getContext("webgl");
+    if (!gl) {
+        console.log("Failed to get the rendering context for WebGL");
+        return;
+    }
+    // Set clear color Ahora está negro
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    // Clear canvas. Pintamos del color de arriba
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    var vs = document.getElementById('shaderVs').innerHTML;
+    var fs = document.getElementById('shaderFs').innerHTML;
+    if (!initShaders(gl, vs, fs)){
+      console.log('Failed to intialize shaders.');
+      return;
+    }
+    n = initVertexBuffers(gl);
+    if (n < 0) {
+      console.log('Failed to set the positions of the vertices');
+      return;
+    }
+    //Posición del punto
+    var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+    //Tamaño del punto
+    var a_Size = gl.getAttribLocation(gl.program, 'a_Size');
+    //Color del punto
+    var u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
+    if (!u_FragColor){
+      console.log('Failed to intialize Colors.');
+      return;
+    }
+    //Si pulsamos en la pantalla se activa esta función.
+    canvas.onmousedown = function(ev) {
+      click(ev,gl, canvas, a_Position, u_FragColor, a_Size);
+    };
+    //Volvemos a pintar el fondo con los puntos correspondientes
+    gl.clear(gl.COLOR_BUFFER_BIT);
+}
+function click(ev, gl, canvas, a_Position, u_FragColor, a_Size){
+  // Coordinates of canvas origin
+  var rect = ev.target.getBoundingClientRect();
+  // relative x coordinate of click in canvas
+  var clickX = ev.clientX - rect.left;
+  // relative y coordinate of click in canvas
+  var clickY = ev.clientY - rect.top;
+  // WebGL coordinates (3D)
+  var halfCanvasWidth = canvas.width / 2;
+  var halfCanvasHeight = canvas.height / 2;
+
+  var x = (clickX - halfCanvasWidth) / halfCanvasWidth;
+  var y = (halfCanvasHeight - clickY) / halfCanvasHeight;
+  xyz = [x,y,0];
+  //Metemos las coordenadas del primer punto
+  g_points.push(xyz);
+  var red = document.getElementById("red").value;
+  var green = document.getElementById("green").value;
+  var blue = document.getElementById("blue").value;
+  g_colors.push([red,green,blue, 1]);
+  g_size.push(20.0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+n = initVertexBuffers(gl);
+  for(var i = 0; i < g_colors.length; i++){
+    gl.vertexAttrib3fv(a_Position,g_points[i]);
+    gl.uniform4fv(u_FragColor, g_colors[i]);
+    gl.vertexAttrib1f(a_Size,g_size[i]);
+    gl.drawArrays(gl.TRIANGLES, 0 ,n);
+  }
+}
+function initVertexBuffers(gl) {
+    // Vertices
+    var dim = 3;
+    var vertices = new Float32Array([
+    xyz[0], xyz[1] +0.05 , xyz[2], // Vertice #1
+    xyz[0]+0.05,xyz[1]-0.05, xyz[2], // Vertice #2
+    xyz[0]-0.05, xyz[1]-0.05, xyz[2] // Vertice #3
+    ]);
+    // Create a buffer object
+    var vertexBuffer = gl.createBuffer();
+    if (!vertexBuffer) {
+    console.log('Failed to create the buffer object');
+    return -1;
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+    // Assign the vertices in buffer object to a_Position variable
+    var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+    if (a_Position < 0) {
+      console.log('Failed to get the storage location of a_Position');
+      return -1;
+    }
+    gl.vertexAttribPointer(a_Position, dim, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_Position);
+    // Return number of vertices
+    return vertices.length / dim;
+}
+//Los Shaders
+function initShaders(gl, vs_source, fs_source) {
+    // Compile shaders
+    var vertexShader = makeShader(gl, vs_source, gl.VERTEX_SHADER);
+    var fragmentShader = makeShader(gl, fs_source, gl.FRAGMENT_SHADER);
+
+    // Create program
+    var glProgram = gl.createProgram();
+
+    // Attach and link shaders to the program
+    gl.attachShader(glProgram, vertexShader);
+    gl.attachShader(glProgram, fragmentShader);
+    gl.linkProgram(glProgram);
+    if (!gl.getProgramParameter(glProgram, gl.LINK_STATUS)) {
+        alert("Unable to initialize the shader program");
+        return false;
+    }
+
+    // Use program
+    gl.useProgram(glProgram);
+    gl.program = glProgram;
+
+    return true;
+}
+function makeShader(gl, src, type) {
+    var shader = gl.createShader(type);
+    gl.shaderSource(shader, src);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        alert("Error compiling shader: " + gl.getShaderInfoLog(shader));
+        return;
+    }
+    return shader;
+}
+</script>
+</head>
+<body onload="init()">
+  <!--Tamaño del canvas Anchura x Altura-->
+  <canvas id="myCanvas" width="1000" height="750"></canvas><br>
+  <b>Point Color:</b>
+  <input type="range" id="red" min="0" max="1" value="0.5" step="0.1">red
+  <input type="range" id="green" min="0" max="1" value="0.5" step="0.1">green
+  <input type="range" id="blue" min="0" max="1" value="0.5" step="0.1">blue
+
+</body>
